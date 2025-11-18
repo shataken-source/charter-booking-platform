@@ -25,6 +25,8 @@ import DeduplicationTool from './DeduplicationTool';
 import EmailNotificationManager from './EmailNotificationManager';
 import { ReminderSchedulerPanel } from './ReminderSchedulerPanel';
 import PhotoContestVoteAnalytics from './PhotoContestVoteAnalytics';
+import ConfigurationManager from './ConfigurationManager';
+
 
 
 
@@ -247,6 +249,29 @@ export default function AdminPanel() {
             </Button>
           </div>
         </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configuration Variables Manager
+          </h3>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Settings className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-purple-900">Manage API Keys & Environment Variables</p>
+                <p className="text-sm text-purple-700 mt-1">
+                  Add, edit, and delete configuration variables like Firebase Server Key, APNS Key ID, and other API credentials. All variables are stored securely and can be marked as secret to hide values.
+                </p>
+                <p className="text-xs text-purple-600 mt-2">
+                  Features: Add/edit/delete configs, mark as secret, secure storage, easy management
+                </p>
+              </div>
+            </div>
+          </div>
+          <ConfigurationManager />
+        </div>
+
 
 
         <div className="space-y-4 pt-4 border-t">

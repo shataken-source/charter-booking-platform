@@ -1,0 +1,66 @@
+name: Deployment Notifications
+
+on:
+  deployment_status:
+
+jobs:
+  notify:
+    name: Send Deployment Notifications
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'success' || github.event.deployment_status.state == 'failure'
+    
+    steps:
+      - name: Get deployment info
+        id: deployment-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.getDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id
+            });
+            
+            const commit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: deployment.data.sha
+            });
+            
+            return {
+              environment: deployment.data.environment,
+              sha: deployment.data.sha.substring(0, 7),
+              message: commit.data.commit.message,
+              author: commit.data.commit.author.name,
+              url: context.payload.deployment_status.environment_url
+            };
+
+      - name: Create success notification
+        if: github.event.deployment_status.state == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const info = ${{ steps.deployment-info.outputs.result }};
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.deployment.id,
+              body: `## ✅ Deployment Successful\n\n**Environment:** ${info.environment}\n**Commit:** ${info.sha}\n**Message:** ${info.message}\n**Author:** ${info.author}\n**URL:** ${info.url}\n**Time:** ${new Date().toISOString()}`
+            });
+
+      - name: Create failure notification
+        if: github.event.deployment_status.state == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const info = ${{ steps.deployment-info.outputs.result }};
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Deployment Failed: ${info.environment} - ${info.sha}`,
+              body: `## ❌ Deployment Failed\n\n**Environment:** ${info.environment}\n**Commit:** ${info.sha}\n**Message:** ${info.message}\n**Author:** ${info.author}\n**Time:** ${new Date().toISOString()}\n\n**Action Required:** Please investigate the deployment failure.`,
+              labels: ['deployment-failure', info.environment, 'urgent'],
+              assignees: ['${{ github.actor }}']
+            });

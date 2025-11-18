@@ -12,7 +12,7 @@ export default function CorporateAccountManager() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Corporate account request:', { companyName, contactEmail });
+    // Corporate account request submitted
   };
 
   return (

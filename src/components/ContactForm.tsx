@@ -20,7 +20,7 @@ export default function ContactForm({ charterId }: ContactFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Inquiry submitted:', formData);
+    // Inquiry submitted successfully
     alert(`Thank you! Your inquiry has been sent to ${charter?.businessName || 'the charter'}. They will contact you shortly.`);
     window.location.hash = '#';
   };

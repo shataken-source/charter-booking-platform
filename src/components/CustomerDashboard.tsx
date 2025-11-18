@@ -84,7 +84,7 @@ export default function CustomerDashboard() {
   };
 
   const handleDownloadReceipt = (bookingId: string) => {
-    console.log('Downloading receipt for:', bookingId);
+    // Download receipt functionality
   };
 
   return (

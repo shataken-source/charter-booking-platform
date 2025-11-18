@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useState, useEffect } from 'react';
 
 type Language = 'en' | 'es' | 'fr';
 
@@ -39,23 +38,41 @@ const translations: Record<Language, any> = {
   }
 };
 
-export const useI18nStore = create<I18nState>()(
-  persist(
-    (set, get) => ({
-      language: 'en',
-      
-      setLanguage: (lang) => set({ language: lang }),
-      
-      t: (key) => {
-        const { language } = get();
-        const keys = key.split('.');
-        let value: any = translations[language];
-        for (const k of keys) {
-          value = value?.[k];
-        }
-        return value || key;
-      },
-    }),
-    { name: 'i18n-storage' }
-  )
-);
+let listeners: Array<() => void> = [];
+let state: Omit<I18nState, 'setLanguage' | 't'> = { language: 'en' };
+
+try {
+  const stored = localStorage.getItem('i18n-storage');
+  if (stored) state = JSON.parse(stored).state || state;
+} catch (e) {}
+
+const setState = (newState: Partial<typeof state>) => {
+  state = { ...state, ...newState };
+  try {
+    localStorage.setItem('i18n-storage', JSON.stringify({ state }));
+  } catch (e) {}
+  listeners.forEach(l => l());
+};
+
+export const useI18nStore = <T>(selector: (state: I18nState) => T): T => {
+  const [, forceUpdate] = useState({});
+  
+  useEffect(() => {
+    const listener = () => forceUpdate({});
+    listeners.push(listener);
+    return () => { listeners = listeners.filter(l => l !== listener); };
+  }, []);
+  
+  const fullState: I18nState = {
+    ...state,
+    setLanguage: (lang) => setState({ language: lang }),
+    t: (key) => {
+      const keys = key.split('.');
+      let value: any = translations[state.language];
+      for (const k of keys) value = value?.[k];
+      return value || key;
+    },
+  };
+  
+  return selector(fullState);
+};
