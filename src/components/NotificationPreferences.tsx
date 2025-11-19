@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { PushNotificationManager } from '@/components/PushNotificationManager';
+import SMSPreferences from '@/components/SMSPreferences';
+
 
 interface Preferences {
   booking_updates: boolean;
@@ -31,9 +33,11 @@ export function NotificationPreferences() {
     push_notifications: true,
     sms_notifications: false,
   });
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
 
   useEffect(() => {
     fetchPreferences();
@@ -42,6 +46,8 @@ export function NotificationPreferences() {
   const fetchPreferences = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
+    setUserId(user.id);
 
     const { data, error } = await supabase
       .from('notification_preferences')
@@ -56,6 +62,7 @@ export function NotificationPreferences() {
     }
     setLoading(false);
   };
+
 
   const handleToggle = (key: keyof Preferences) => {
     setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
@@ -184,6 +191,8 @@ export function NotificationPreferences() {
       </Card>
 
       <PushNotificationManager />
+
+      {userId && <SMSPreferences userId={userId} />}
 
       <Button onClick={savePreferences} disabled={saving} className="w-full">
         {saving ? 'Saving...' : 'Save Preferences'}

@@ -1,4 +1,16 @@
 // IndexedDB utilities for offline storage
+
+interface Booking {
+  id: string;
+  [key: string]: unknown;
+}
+
+interface PendingAction {
+  id?: number;
+  timestamp?: number;
+  [key: string]: unknown;
+}
+
 export const openBookingsDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('CaptainBookingsDB', 1);
@@ -20,7 +32,7 @@ export const openBookingsDB = (): Promise<IDBDatabase> => {
   });
 };
 
-export const saveBookingsOffline = async (bookings: any[]) => {
+export const saveBookingsOffline = async (bookings: Booking[]) => {
   const db = await openBookingsDB();
   const transaction = db.transaction(['bookings'], 'readwrite');
   const store = transaction.objectStore('bookings');
@@ -35,7 +47,7 @@ export const saveBookingsOffline = async (bookings: any[]) => {
   });
 };
 
-export const getOfflineBookings = async (): Promise<any[]> => {
+export const getOfflineBookings = async (): Promise<Booking[]> => {
   const db = await openBookingsDB();
   const transaction = db.transaction(['bookings'], 'readonly');
   const store = transaction.objectStore('bookings');
@@ -47,7 +59,7 @@ export const getOfflineBookings = async (): Promise<any[]> => {
   });
 };
 
-export const queueOfflineAction = async (action: any) => {
+export const queueOfflineAction = async (action: PendingAction) => {
   const db = await openBookingsDB();
   const transaction = db.transaction(['pending-actions'], 'readwrite');
   const store = transaction.objectStore('pending-actions');
@@ -59,7 +71,7 @@ export const queueOfflineAction = async (action: any) => {
   });
 };
 
-export const getPendingActions = async (): Promise<any[]> => {
+export const getPendingActions = async (): Promise<PendingAction[]> => {
   const db = await openBookingsDB();
   const transaction = db.transaction(['pending-actions'], 'readonly');
   const store = transaction.objectStore('pending-actions');

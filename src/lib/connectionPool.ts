@@ -11,13 +11,15 @@ interface PoolConfig {
 class ConnectionPool {
   private config: PoolConfig;
   private activeConnections = 0;
-  private waitQueue: Array<(client: any) => void> = [];
+  private waitQueue: Array<(client: typeof supabase) => void> = [];
+
   
   constructor(config: PoolConfig) {
     this.config = config;
   }
 
-  async acquire(): Promise<any> {
+  async acquire(): Promise<typeof supabase> {
+
     if (this.activeConnections < this.config.maxConnections) {
       this.activeConnections++;
       return supabase;

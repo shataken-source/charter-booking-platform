@@ -11,7 +11,8 @@ interface MarketplaceNotificationBadgeProps {
 
 export default function MarketplaceNotificationBadge({ userId, onOpenMarketplace }: MarketplaceNotificationBadgeProps) {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [recentMessages, setRecentMessages] = useState<any[]>([]);
+  const [recentMessages, setRecentMessages] = useState<Array<{ id: string; message_text: string; created_at: string }>>([]);
+
   const [showDropdown, setShowDropdown] = useState(false);
 
   const fetchUnreadCount = async () => {
@@ -34,7 +35,8 @@ export default function MarketplaceNotificationBadge({ userId, onOpenMarketplace
       const interval = setInterval(fetchUnreadCount, 30000);
       return () => clearInterval(interval);
     }
-  }, [userId]);
+  }, [userId, fetchUnreadCount]);
+
 
   return (
     <div className="relative">

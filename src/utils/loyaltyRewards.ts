@@ -72,7 +72,8 @@ export function hasActiveDiscount(userId: string): { hasDiscount: boolean; disco
   const data = getLoyaltyData(userId);
   if (!data) return { hasDiscount: false, discountPercentage: 0 };
 
-  const activeDiscounts = data.redeemedRewards.filter((r: any) => 
+  const activeDiscounts = data.redeemedRewards.filter((r: { name: string; expiresAt: string }) => 
+
     r.name.includes('Discount') && new Date(r.expiresAt) > new Date()
   );
 

@@ -29,9 +29,11 @@ export async function runStressTest(
       responseTimes.push(reqTime);
       if (error) throw error;
       successCount++;
-    } catch (error: any) {
+    } catch (error: unknown) {
+
       failCount++;
-      const msg = error?.message || 'Unknown error';
+      const msg = (error as Error)?.message || 'Unknown error';
+
       errors.set(msg, (errors.get(msg) || 0) + 1);
     }
   };
