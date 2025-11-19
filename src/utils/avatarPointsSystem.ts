@@ -9,7 +9,8 @@ interface PointTransaction {
   userId: string;
   amount: number;
   reason: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
+
 }
 
 export const POINT_REWARDS = {

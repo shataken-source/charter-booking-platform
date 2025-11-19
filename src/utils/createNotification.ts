@@ -6,7 +6,8 @@ interface CreateNotificationParams {
   title: string;
   message: string;
   link?: string;
-  data?: any;
+  data?: Record<string, unknown>;
+
 }
 
 export async function createNotification(params: CreateNotificationParams) {

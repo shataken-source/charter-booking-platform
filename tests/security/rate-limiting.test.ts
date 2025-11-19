@@ -35,14 +35,15 @@ export async function testRateLimiting(): Promise<RateLimitResult[]> {
         requestsMade,
         blocked
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       results.push({
         test: 'API rate limiting',
         passed: false,
         requestsMade,
         blocked,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
+
     }
   };
   
@@ -71,7 +72,8 @@ export async function testRateLimiting(): Promise<RateLimitResult[]> {
         requestsMade: attempts,
         blocked
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+
       results.push({
         test: 'Login rate limiting',
         passed: true,

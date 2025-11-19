@@ -82,10 +82,11 @@ class BackgroundSyncManager {
   }
 
   async registerSync() {
-    if ('serviceWorker' in navigator && 'sync' in (self as any).registration) {
+    if ('serviceWorker' in navigator && 'sync' in (self as ServiceWorkerGlobalScope & typeof globalThis).registration) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        await (registration as any).sync.register('sync-bookings');
+        await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-bookings');
+
       } catch (error) {
         console.error('Background sync registration failed:', error);
       }

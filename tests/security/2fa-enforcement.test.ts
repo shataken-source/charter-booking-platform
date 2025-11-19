@@ -32,12 +32,13 @@ export async function test2FAEnforcement(): Promise<TwoFactorTestResult[]> {
         });
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     results.push({
       test: 'Admin 2FA check',
       passed: false,
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
+
   }
   
   // Test 2: Admin cannot access without 2FA verification
@@ -51,7 +52,8 @@ export async function test2FAEnforcement(): Promise<TwoFactorTestResult[]> {
       passed: !data || data.error === '2FA required',
       details: data?.error || 'Access granted without 2FA'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+
     results.push({
       test: 'Admin endpoints require 2FA',
       passed: true,

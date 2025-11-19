@@ -11,7 +11,8 @@ export interface DatabaseHealthStatus {
 export async function checkDatabaseHealth(): Promise<DatabaseHealthStatus> {
   const startTime = Date.now();
   const errors: string[] = [];
-  let activeConnections = 0;
+  const activeConnections = 0;
+
 
   try {
     // Test basic connection

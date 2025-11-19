@@ -32,8 +32,13 @@ const log = (test: string, success: boolean, details?: string) => {
   const status = success ? '✓ PASS' : '✗ FAIL';
   console.log(`${status}: ${test}`);
   if (details) console.log(`  → ${details}`);
-  success ? passed++ : failed++;
+  if (success) {
+    passed++;
+  } else {
+    failed++;
+  }
 };
+
 
 // ===== TEST SUITE =====
 
@@ -91,8 +96,9 @@ async function runCaptainTests() {
     });
     log('Cannot access admin functions', !!adminError, 'Access properly restricted');
 
-  } catch (error: any) {
-    log('Test execution', false, error.message);
+  } catch (error: unknown) {
+    log('Test execution', false, error instanceof Error ? error.message : 'Unknown error');
+
   }
 
   // Summary
