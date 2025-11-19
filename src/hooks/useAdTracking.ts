@@ -11,13 +11,6 @@ interface AdTrackingProps {
 export const useAdTracking = ({ businessId, businessName, adType, adCost }: AdTrackingProps) => {
   const impressionTracked = useRef(false);
 
-  useEffect(() => {
-    if (!impressionTracked.current) {
-      trackImpression();
-      impressionTracked.current = true;
-    }
-  }, []);
-
   const trackImpression = async () => {
     try {
       await supabase.functions.invoke('track-ad-event', {
@@ -33,6 +26,14 @@ export const useAdTracking = ({ businessId, businessName, adType, adCost }: AdTr
       console.error('Error tracking impression:', error);
     }
   };
+
+  useEffect(() => {
+    if (!impressionTracked.current) {
+      trackImpression();
+      impressionTracked.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const trackClick = async () => {
     try {

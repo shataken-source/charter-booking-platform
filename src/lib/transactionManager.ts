@@ -40,9 +40,9 @@ export async function optimisticBooking(
   captainId: string,
   date: string,
   bookingData: Record<string, unknown>
-
-) {
+): Promise<unknown> {
   const transaction = new TransactionManager();
+
 
   try {
     // 1. Check availability with version lock

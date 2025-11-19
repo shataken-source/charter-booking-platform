@@ -34,6 +34,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Deploy to Netlify
+        if: ${{ secrets.NETLIFY_AUTH_TOKEN != '' && secrets.NETLIFY_SITE_ID != '' }}
         uses: nwtgck/actions-netlify@v3.0
         with:
           publish-dir: './dist'
@@ -45,3 +46,11 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      
+      - name: Netlify credentials not configured
+        if: ${{ secrets.NETLIFY_AUTH_TOKEN == '' || secrets.NETLIFY_SITE_ID == '' }}
+        run: |
+          echo "⚠️ Netlify deployment skipped - credentials not configured"
+          echo "To enable Netlify deployment, add NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
+          echo "See .github/DEPLOYMENT_SECRETS.md for instructions"
+

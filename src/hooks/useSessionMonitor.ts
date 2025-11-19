@@ -63,7 +63,9 @@ export function useSessionMonitor() {
     logoutTimerRef.current = setTimeout(() => {
       handleLogout();
     }, logoutTime);
-  }, [preferences]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences.timeoutDuration, preferences.warningDuration]);
+
 
   // Handle logout
   const handleLogout = useCallback(async () => {
