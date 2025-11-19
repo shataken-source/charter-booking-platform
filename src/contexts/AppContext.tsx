@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+
 
 export interface Review {
   id: string;
@@ -24,7 +25,8 @@ export interface Charter {
     email: boolean;
     phone: boolean;
   };
-  customEmail?: string; // Custom @wheretovacation.com email
+  customEmail?: string; // Custom @gulfcoastcharters.com email
+
 
   hasCustomEmail?: boolean; // Whether they purchased custom email
   useCustomEmail?: boolean; // Whether they want to use custom email for contact
@@ -148,7 +150,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
     setReviews(prev => [newReview, ...prev]);
-    toast({ title: 'Review Submitted!', description: 'Thank you for sharing your experience.' });
+    toast.success('Review Submitted! Thank you for sharing your experience.');
+
   };
 
   const getReviewsByCharter = (charterId: string) => reviews.filter(r => r.charterId === charterId);
@@ -166,31 +169,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unavailableDates: [],
     };
     setCharters(prev => [newCharter, ...prev]);
-    toast({ title: 'Charter Added!', description: `${charterData.businessName} added.` });
+    toast.success(`Charter Added! ${charterData.businessName} added.`);
   };
 
   const updateCharterAvailability = (charterId: string, unavailableDates: string[]) => {
     setCharters(prev => prev.map(c => c.id === charterId ? { ...c, unavailableDates } : c));
-    toast({ title: 'Availability Updated', description: 'Your calendar has been updated.' });
+    toast.success('Availability Updated. Your calendar has been updated.');
   };
 
   const addBooking = (booking: Omit<Booking, 'id' | 'createdAt'>) => {
     const newBooking: Booking = { ...booking, id: uuidv4(), createdAt: new Date().toISOString() };
     setBookings(prev => [newBooking, ...prev]);
-    toast({ title: 'Booking Submitted!', description: 'Your reservation request has been sent.' });
+    toast.success('Booking Submitted! Your reservation request has been sent.');
   };
 
   const addToCompare = (charterId: string) => {
     if (compareCharters.includes(charterId)) {
-      toast({ title: 'Already Added', description: 'This charter is already in comparison' });
+      toast.error('Already Added. This charter is already in comparison');
       return;
     }
     if (compareCharters.length >= 4) {
-      toast({ title: 'Maximum Reached', description: 'You can compare up to 4 charters' });
+      toast.error('Maximum Reached. You can compare up to 4 charters');
       return;
     }
     setCompareCharters(prev => [...prev, charterId]);
-    toast({ title: 'Added to Compare', description: 'Charter added to comparison' });
+    toast.success('Added to Compare. Charter added to comparison');
+
   };
 
   const removeFromCompare = (charterId: string) => {

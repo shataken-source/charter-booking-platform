@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Building2, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Save, Building2, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, Key } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function SiteSettingsManager() {
   const { settings, updateSettings } = useSiteSettings();
@@ -158,6 +159,29 @@ export default function SiteSettingsManager() {
                 onChange={(e) => handleChange('youtube', e.target.value)}
                 placeholder="https://youtube.com/@yourchannel"
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold text-lg">API Keys & Integrations</h3>
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="firebaseServerKey" className="flex items-center gap-2">
+                <Key className="w-4 h-4" />
+                Firebase Server Key
+              </Label>
+              <Textarea
+                id="firebaseServerKey"
+                value={formData.firebaseServerKey}
+                onChange={(e) => handleChange('firebaseServerKey', e.target.value)}
+                placeholder="Enter your Firebase Cloud Messaging server key for push notifications"
+                className="font-mono text-sm"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Used for sending push notifications to mobile app users. Get this from Firebase Console → Project Settings → Cloud Messaging.
+              </p>
             </div>
           </div>
         </div>

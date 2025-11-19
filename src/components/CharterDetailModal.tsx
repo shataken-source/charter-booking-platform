@@ -11,17 +11,25 @@ interface CharterDetailModalProps {
 export default function CharterDetailModal({ charter, onClose, onBook }: CharterDetailModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-t-4 border-t-blue-600" onClick={(e) => e.stopPropagation()}>
         <div className="relative">
           <img src={charter.image} alt={charter.name} className="w-full h-80 object-cover rounded-t-2xl" />
-          <button onClick={onClose} className="absolute top-4 right-4 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition">
-            <X className="w-6 h-6" />
-          </button>
-          <div className="absolute bottom-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2">
+          <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/40 to-transparent p-4">
+            <div className="flex justify-between items-start">
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                Gulf Coast Charters
+              </div>
+              <button onClick={onClose} className="bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+          <div className="absolute bottom-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg">
             <Star className="w-5 h-5 fill-white" />
-            {charter.rating}
+            {charter.rating} Rating
           </div>
         </div>
+
 
         <div className="p-8">
           <div className="flex justify-between items-start mb-6">

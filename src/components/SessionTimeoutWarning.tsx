@@ -44,18 +44,21 @@ export function SessionTimeoutWarning({
   const seconds = timeLeft % 60;
   const progressValue = (timeLeft / remainingSeconds) * 100;
 
+
   return (
+
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2 text-amber-600">
+      <DialogContent className="sm:max-w-md border-t-4 border-t-amber-500">
+        <DialogHeader className="bg-gradient-to-r from-amber-500 to-orange-500 -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+          <div className="flex items-center gap-2 text-white">
             <AlertTriangle className="h-6 w-6" />
-            <DialogTitle>Session Timeout Warning</DialogTitle>
+            <DialogTitle className="text-white">Session Expiring Soon</DialogTitle>
           </div>
-          <DialogDescription>
-            Your session is about to expire due to inactivity.
+          <DialogDescription className="text-amber-50">
+            Your Gulf Coast Charters session will expire due to inactivity. Stay logged in to continue managing your bookings.
           </DialogDescription>
         </DialogHeader>
+
 
         <div className="space-y-4 py-4">
           <div className="flex items-center justify-center gap-2 text-4xl font-bold text-amber-600">
@@ -84,3 +87,5 @@ export function SessionTimeoutWarning({
     </Dialog>
   );
 }
+
+export default SessionTimeoutWarning;

@@ -40,7 +40,8 @@ export default function CustomEmailPurchase({
 
     if (isDemoMode) {
       setTimeout(() => {
-        const customEmail = `${customEmailPrefix}@wheretovacation.com`;
+        const customEmail = `${customEmailPrefix}@gulfcoastcharters.com`;
+
 
         onPurchaseSuccess(customEmail);
         setLoading(false);
@@ -72,8 +73,9 @@ export default function CustomEmailPurchase({
         <div className="flex-1">
           <h3 className="font-bold text-lg mb-1">Custom Email Address</h3>
           <p className="text-sm text-gray-600 mb-4">
-            Get a professional @wheretovacation.com email for just $10 (valid until listing deletion)
+            Get a professional @gulfcoastcharters.com email for just $10 (valid until listing deletion)
           </p>
+
 
 
           {hasCustomEmail ? (
@@ -95,8 +97,9 @@ export default function CustomEmailPurchase({
                   className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
                 <span className="flex items-center px-3 bg-gray-100 rounded-lg text-gray-700">
-                  @wheretovacation.com
+                  @gulfcoastcharters.com
                 </span>
+
 
               </div>
               {error && <p className="text-red-600 text-sm mb-3">{error}</p>}

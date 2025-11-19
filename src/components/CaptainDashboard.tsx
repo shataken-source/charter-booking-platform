@@ -16,9 +16,15 @@ import CaptainEarnings from './CaptainEarnings';
 import CaptainAvailabilityCalendar from './CaptainAvailabilityCalendar';
 import InsuranceVerification from './InsuranceVerification';
 import { CertificationManager } from './CertificationManager';
-import { FleetManagement } from './FleetManagement';
 import CaptainAlertPreferences from './CaptainAlertPreferences';
 import AlertHistoryPanel from './AlertHistoryPanel';
+import CaptainPerformanceTracker from './CaptainPerformanceTracker';
+import { FleetManagement } from './FleetManagement';
+import { BookingManagementPanel } from './captain/BookingManagementPanel';
+import { EarningsChartPanel } from './captain/EarningsChartPanel';
+import { CustomerMessagingPanel } from './captain/CustomerMessagingPanel';
+import { DocumentUploadPanel } from './captain/DocumentUploadPanel';
+
 
 
 
@@ -53,6 +59,26 @@ export default function CaptainDashboard() {
 
   const captainId = 'captain1'; // In production, get from auth context
 
+  // Mock earnings data for charts
+  const earningsData = {
+    monthlyEarnings: [
+      { month: 'Jan', amount: 4500 },
+      { month: 'Feb', amount: 5200 },
+      { month: 'Mar', amount: 6100 },
+      { month: 'Apr', amount: 5800 },
+      { month: 'May', amount: 7200 },
+      { month: 'Jun', amount: 8500 }
+    ],
+    bookingRevenue: [
+      { charter: 'Deep Sea Fishing', revenue: 2400 },
+      { charter: 'Sunset Cruise', revenue: 1800 },
+      { charter: 'Island Hopping', revenue: 3200 },
+      { charter: 'Snorkeling Trip', revenue: 1500 }
+    ],
+    totalEarnings: 32500,
+    thisMonth: 8500
+  };
+
   useEffect(() => {
     loadBookings();
     loadAnalytics();
@@ -68,7 +94,7 @@ export default function CaptainDashboard() {
           data: { status: statusFilter, startDate, endDate }
         }
       });
-      setBookings(data.bookings || []);
+      setBookings(data?.bookings || []);
     } catch (error) {
       console.error('Error loading bookings:', error);
     }
@@ -110,6 +136,7 @@ export default function CaptainDashboard() {
     alert('Reminder sent successfully!');
     loadBookings();
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
@@ -166,16 +193,20 @@ export default function CaptainDashboard() {
 
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="fleet">Fleet</TabsTrigger>
-            <TabsTrigger value="certifications">Certs</TabsTrigger>
-            <TabsTrigger value="availability">Calendar</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            <TabsTrigger value="insurance">Insurance</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+            <TabsTrigger value="bookings" className="text-xs sm:text-sm">Bookings</TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
+            <TabsTrigger value="earnings" className="text-xs sm:text-sm">Earnings</TabsTrigger>
+            <TabsTrigger value="messages" className="text-xs sm:text-sm">Messages</TabsTrigger>
+            <TabsTrigger value="documents" className="text-xs sm:text-sm">Documents</TabsTrigger>
+            <TabsTrigger value="fleet" className="text-xs sm:text-sm">Fleet</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
+            <TabsTrigger value="performance" className="text-xs sm:text-sm">Stats</TabsTrigger>
+            <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
+            <TabsTrigger value="alerts" className="text-xs sm:text-sm">Alerts</TabsTrigger>
           </TabsList>
+
+
 
 
 
@@ -265,37 +296,45 @@ export default function CaptainDashboard() {
               ))}
             </div>
 
+
           </TabsContent>
 
-          <TabsContent value="certifications">
-            <CertificationManager captainId={captainId} />
+          <TabsContent value="pending">
+            <BookingManagementPanel bookings={bookings} onUpdate={loadBookings} />
           </TabsContent>
 
-          <TabsContent value="availability">
+          <TabsContent value="earnings">
+            <EarningsChartPanel data={earningsData} />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <CustomerMessagingPanel captainId={captainId} />
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <DocumentUploadPanel captainId={captainId} />
+          </TabsContent>
+
+          <TabsContent value="fleet">
+            <FleetManagement />
+          </TabsContent>
+
+
+          <TabsContent value="calendar">
             <CaptainAvailabilityCalendar captainId={captainId} />
           </TabsContent>
 
-          
-          <TabsContent value="earnings">
-            <CaptainEarnings captainId={captainId} />
+          <TabsContent value="performance">
+            <CaptainPerformanceTracker />
           </TabsContent>
           
           <TabsContent value="reviews">
             <ReviewModeration captainId={captainId} />
           </TabsContent>
 
-          <TabsContent value="insurance">
-            <InsuranceVerification captainId={captainId} />
-          </TabsContent>
-
-
           <TabsContent value="alerts" className="space-y-6">
             <CaptainAlertPreferences />
             <AlertHistoryPanel />
-          </TabsContent>
-
-          <TabsContent value="fleet">
-            <FleetManagement captainId={captainId} />
           </TabsContent>
 
 

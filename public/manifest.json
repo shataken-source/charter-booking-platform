@@ -1,24 +1,45 @@
 {
-  "name": "Charter Booking App",
-  "short_name": "Charter App",
-  "description": "Book yacht charters and explore destinations",
+  "name": "Gulf Coast Charters",
+  "short_name": "GCC",
+  "description": "Premier fishing charters from Texas to Florida",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0ea5e9",
-  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/placeholder.svg",
+      "src": "https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763516856226_eba590db.webp",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/webp",
       "purpose": "any maskable"
     },
     {
-      "src": "/placeholder.svg",
+      "src": "https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763516856226_eba590db.webp",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/webp",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Captain Dashboard",
+      "short_name": "Captain",
+      "description": "Access captain dashboard",
+      "url": "/captain/mobile-dashboard",
+      "icons": [{ 
+        "src": "https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763516856226_eba590db.webp", 
+        "sizes": "96x96" 
+      }]
+    },
+    {
+      "name": "Weather Alerts",
+      "short_name": "Weather",
+      "description": "View marine weather",
+      "url": "/captain/mobile-dashboard?tab=weather",
+      "icons": [{ 
+        "src": "https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763516856226_eba590db.webp", 
+        "sizes": "96x96" 
+      }]
     }
   ]
 }

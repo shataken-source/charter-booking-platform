@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/components/ui/use-toast';
 
@@ -83,7 +82,7 @@ interface AppState {
   addReview: (charterId: string, reviewData: Omit<Review, 'id' | 'charterId' | 'date'>) => void;
   getReviewsByCharter: (charterId: string) => Review[];
   hasActivePaidAd: (type: 'hero' | 'sidebar' | 'featured') => boolean;
-  addCharter: (charterData: Omit<Charter, 'id' | 'rating' | 'reviews' | 'imageUrl'>) => void;
+  addCharter: (charterData: any) => void;
   updateCharterAvailability: (charterId: string, unavailableDates: string[]) => void;
   setCaptain: (captain: Captain | null) => void;
   addBooking: (booking: Omit<Booking, 'id' | 'createdAt'>) => void;
@@ -92,95 +91,103 @@ interface AppState {
   clearCompare: () => void;
 }
 
-export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      sidebarOpen: false,
-      reviews: [],
-      paidAds: [],
-      charters: [],
-      captain: null,
-      bookings: [],
-      compareCharters: [],
-      
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-      
-      addReview: (charterId, reviewData) => {
-        const newReview: Review = {
-          ...reviewData,
-          id: uuidv4(),
-          charterId,
-          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        };
-        set((state) => ({ reviews: [newReview, ...state.reviews] }));
-        toast({ title: 'Review Submitted!', description: 'Thank you for sharing your experience.' });
-      },
-      
-      getReviewsByCharter: (charterId) => get().reviews.filter(r => r.charterId === charterId),
-      
-      hasActivePaidAd: (type) => get().paidAds.some(ad => ad.type === type && ad.active),
-      
-      addCharter: (charterData: any) => {
-        const newCharter: Charter = {
-          id: charterData.id || uuidv4(),
-          businessName: charterData.businessName,
-          boatName: charterData.boatName,
-          captainName: charterData.captainName,
-          captainEmail: charterData.captainEmail,
-          captainPhone: charterData.captainPhone,
-          contactPreferences: charterData.contactPreferences || { email: true, phone: true },
-          location: charterData.location,
-          city: charterData.city,
-          boatType: charterData.boatType,
-          boatLength: charterData.boatLength,
-          maxPassengers: charterData.maxPassengers,
-          priceHalfDay: charterData.priceHalfDay,
-          priceFullDay: charterData.priceFullDay,
-          rating: charterData.rating || 0,
-          reviews: charterData.reviewCount || 0,
-          imageUrl: charterData.image || charterData.imageUrl || 'https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763224699486_cabce3b8.webp',
-          unavailableDates: charterData.unavailableDates || [],
-        };
-        set((state) => ({ charters: [newCharter, ...state.charters] }));
-        toast({ title: 'Charter Added!', description: `${charterData.businessName} has been added to listings.` });
-      },
+let listeners: Array<() => void> = [];
+let state: Omit<AppState, 'toggleSidebar' | 'addReview' | 'getReviewsByCharter' | 'hasActivePaidAd' | 'addCharter' | 'updateCharterAvailability' | 'setCaptain' | 'addBooking' | 'addToCompare' | 'removeFromCompare' | 'clearCompare'> = {
+  sidebarOpen: false,
+  reviews: [],
+  paidAds: [],
+  charters: [],
+  captain: null,
+  bookings: [],
+  compareCharters: [],
+};
 
-      
-      updateCharterAvailability: (charterId, unavailableDates) => {
-        set((state) => ({
-          charters: state.charters.map(c => c.id === charterId ? { ...c, unavailableDates } : c)
-        }));
-        toast({ title: 'Availability Updated', description: 'Your calendar has been updated.' });
-      },
-      
-      setCaptain: (captain) => set({ captain }),
-      
-      addBooking: (booking) => {
-        const newBooking: Booking = { ...booking, id: uuidv4(), createdAt: new Date().toISOString() };
-        set((state) => ({ bookings: [newBooking, ...state.bookings] }));
-        toast({ title: 'Booking Submitted!', description: 'Your reservation request has been sent.' });
-      },
-      
-      addToCompare: (charterId) => {
-        const state = get();
-        if (state.compareCharters.includes(charterId)) {
-          toast({ title: 'Already Added', description: 'This charter is already in comparison' });
-          return;
-        }
-        if (state.compareCharters.length >= 4) {
-          toast({ title: 'Maximum Reached', description: 'You can compare up to 4 charters' });
-          return;
-        }
-        set((state) => ({ compareCharters: [...state.compareCharters, charterId] }));
-        toast({ title: 'Added to Compare', description: 'Charter added to comparison' });
-      },
-      
-      removeFromCompare: (charterId) => {
-        set((state) => ({ compareCharters: state.compareCharters.filter(id => id !== charterId) }));
-      },
-      
-      clearCompare: () => set({ compareCharters: [] }),
-    }),
-    { name: 'app-storage' }
-  )
-);
+try {
+  const stored = localStorage.getItem('app-storage');
+  if (stored) state = JSON.parse(stored).state || state;
+} catch (e) {}
+
+const setState = (newState: Partial<typeof state>) => {
+  state = { ...state, ...newState };
+  try {
+    localStorage.setItem('app-storage', JSON.stringify({ state }));
+  } catch (e) {}
+  listeners.forEach(l => l());
+};
+
+export const useAppStore = <T>(selector: (state: AppState) => T): T => {
+  const [, forceUpdate] = useState({});
+  
+  useEffect(() => {
+    const listener = () => forceUpdate({});
+    listeners.push(listener);
+    return () => { listeners = listeners.filter(l => l !== listener); };
+  }, []);
+  
+  const fullState: AppState = {
+    ...state,
+    toggleSidebar: () => setState({ sidebarOpen: !state.sidebarOpen }),
+    addReview: (charterId, reviewData) => {
+      const newReview: Review = {
+        ...reviewData,
+        id: uuidv4(),
+        charterId,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      };
+      setState({ reviews: [newReview, ...state.reviews] });
+      toast({ title: 'Review Submitted!', description: 'Thank you for sharing your experience.' });
+    },
+    getReviewsByCharter: (charterId) => state.reviews.filter(r => r.charterId === charterId),
+    hasActivePaidAd: (type) => state.paidAds.some(ad => ad.type === type && ad.active),
+    addCharter: (charterData: any) => {
+      const newCharter: Charter = {
+        id: charterData.id || uuidv4(),
+        businessName: charterData.businessName,
+        boatName: charterData.boatName,
+        captainName: charterData.captainName,
+        captainEmail: charterData.captainEmail,
+        captainPhone: charterData.captainPhone,
+        contactPreferences: charterData.contactPreferences || { email: true, phone: true },
+        location: charterData.location,
+        city: charterData.city,
+        boatType: charterData.boatType,
+        boatLength: charterData.boatLength,
+        maxPassengers: charterData.maxPassengers,
+        priceHalfDay: charterData.priceHalfDay,
+        priceFullDay: charterData.priceFullDay,
+        rating: charterData.rating || 0,
+        reviews: charterData.reviewCount || 0,
+        imageUrl: charterData.image || charterData.imageUrl || 'https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763224699486_cabce3b8.webp',
+        unavailableDates: charterData.unavailableDates || [],
+      };
+      setState({ charters: [newCharter, ...state.charters] });
+      toast({ title: 'Charter Added!', description: `${charterData.businessName} added.` });
+    },
+    updateCharterAvailability: (charterId, unavailableDates) => {
+      setState({ charters: state.charters.map(c => c.id === charterId ? { ...c, unavailableDates } : c) });
+      toast({ title: 'Availability Updated' });
+    },
+    setCaptain: (captain) => setState({ captain }),
+    addBooking: (booking) => {
+      const newBooking: Booking = { ...booking, id: uuidv4(), createdAt: new Date().toISOString() };
+      setState({ bookings: [newBooking, ...state.bookings] });
+      toast({ title: 'Booking Submitted!' });
+    },
+    addToCompare: (charterId) => {
+      if (state.compareCharters.includes(charterId)) {
+        toast({ title: 'Already Added' });
+        return;
+      }
+      if (state.compareCharters.length >= 4) {
+        toast({ title: 'Maximum Reached' });
+        return;
+      }
+      setState({ compareCharters: [...state.compareCharters, charterId] });
+      toast({ title: 'Added to Compare' });
+    },
+    removeFromCompare: (charterId) => setState({ compareCharters: state.compareCharters.filter(id => id !== charterId) }),
+    clearCompare: () => setState({ compareCharters: [] }),
+  };
+  
+  return selector(fullState);
+};

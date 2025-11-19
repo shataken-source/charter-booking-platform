@@ -36,6 +36,6 @@ For deployment, add these secrets in GitHub:
 ## Future Updates
 ```bash
 git add .
-git commit -m "Your update message"
+git commit -m "Updated!"
 git push
 ```

@@ -1,47 +1,38 @@
-import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { I18nProvider } from "@/contexts/I18nContext";
-import { UserProvider } from "@/contexts/UserContext";
-import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
+import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/theme-provider';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import SessionTimeoutWarning from '@/components/SessionTimeoutWarningWrapper';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+import OfflineIndicator from '@/components/OfflineIndicator';
+import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
+import { UserProvider } from '@/contexts/UserContext';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import './App.css';
 
-import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 
 const Index = lazy(() => import("./pages/Index"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
-const CaptainLogin = lazy(() => import("./pages/CaptainLogin"));
-const ApplyCaptain = lazy(() => import("./pages/ApplyCaptain"));
 const CaptainDirectory = lazy(() => import("./pages/CaptainDirectory"));
 const CaptainProfile = lazy(() => import("./pages/CaptainProfile"));
-const CaptainDashboard = lazy(() => import("./components/CaptainDashboard"));
-const CustomerDashboard = lazy(() => import("./components/CustomerDashboard"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Community = lazy(() => import("./pages/Community"));
-const OAuthSetupWizard = lazy(() => import("./components/OAuthSetupWizard"));
-const EmailCampaignManager = lazy(() => import("./components/EmailCampaignManager"));
-const MailingListManager = lazy(() => import("./components/MailingListManager"));
-const SMSCampaignManager = lazy(() => import("./components/SMSCampaignManager"));
-const FeatureFlagAdmin = lazy(() => import("./components/FeatureFlagAdmin"));
-const UserManagementPanel = lazy(() => import("./components/admin/UserManagementPanel"));
-const UserActivityAnalytics = lazy(() => import("./components/UserActivityAnalytics"));
 const MarineGearShop = lazy(() => import("./pages/MarineGearShop"));
+const ApplyCaptain = lazy(() => import("./pages/ApplyCaptain"));
+const CaptainLogin = lazy(() => import("./pages/CaptainLogin"));
+const LocationLanding = lazy(() => import("./pages/LocationLanding"));
 const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
 const AffiliateAnalytics = lazy(() => import("./pages/AffiliateAnalytics"));
-const SiteSettingsManager = lazy(() => import("./components/admin/SiteSettingsManager"));
-
-
-
-
-
-
-
-
+const MobileCaptainDashboard = lazy(() => import("./pages/MobileCaptainDashboard"));
+const AdminCaptainReview = lazy(() => import("./pages/AdminCaptainReview"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 
 
@@ -49,55 +40,54 @@ const SiteSettingsManager = lazy(() => import("./components/admin/SiteSettingsMa
 
 
 const App = () => (
-  <ThemeProvider defaultTheme="light">
-    <I18nProvider>
-      <UserProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <PerformanceMonitor />
-          <BrowserRouter>
-            <Suspense fallback={<DashboardSkeleton />}>
-              <Routes>
-                <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-                <Route path="/community" element={<ErrorBoundary><Community /></ErrorBoundary>} />
-                <Route path="/captain-login" element={<ErrorBoundary><CaptainLogin /></ErrorBoundary>} />
-                <Route path="/apply-captain" element={<ErrorBoundary><ApplyCaptain /></ErrorBoundary>} />
-                <Route path="/captains" element={<ErrorBoundary><CaptainDirectory /></ErrorBoundary>} />
-                <Route path="/captain/:id" element={<ErrorBoundary><CaptainProfile /></ErrorBoundary>} />
-                <Route path="/captain-dashboard" element={<ErrorBoundary><CaptainDashboard /></ErrorBoundary>} />
-                <Route path="/my-bookings" element={<ErrorBoundary><CustomerDashboard /></ErrorBoundary>} />
-                <Route path="/payment-success" element={<ErrorBoundary><PaymentSuccess /></ErrorBoundary>} />
-                <Route path="/admin/oauth-setup" element={<ErrorBoundary><OAuthSetupWizard /></ErrorBoundary>} />
-                <Route path="/admin/email-campaigns" element={<ErrorBoundary><EmailCampaignManager /></ErrorBoundary>} />
-                <Route path="/admin/mailing-list" element={<ErrorBoundary><MailingListManager /></ErrorBoundary>} />
-                <Route path="/admin/sms-campaigns" element={<ErrorBoundary><SMSCampaignManager /></ErrorBoundary>} />
-                <Route path="/feature-flags" element={<ErrorBoundary><FeatureFlagAdmin /></ErrorBoundary>} />
-                <Route path="/admin/user-management" element={<ErrorBoundary><UserManagementPanel /></ErrorBoundary>} />
-                <Route path="/admin/analytics" element={<ErrorBoundary><UserActivityAnalytics /></ErrorBoundary>} />
-                <Route path="/marine-gear" element={<ErrorBoundary><MarineGearShop /></ErrorBoundary>} />
-                <Route path="/admin/marine-products" element={<ErrorBoundary><MarineProductsAdmin /></ErrorBoundary>} />
-                <Route path="/admin/affiliate-analytics" element={<ErrorBoundary><AffiliateAnalytics /></ErrorBoundary>} />
+  <ErrorBoundary>
+    <ThemeProvider defaultTheme="light">
+      <QueryClientProvider client={queryClient}>
+        <SiteSettingsProvider>
+          <FeatureFlagProvider>
+            <I18nProvider>
+              <UserProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <OfflineIndicator />
+                  <PWAInstallPrompt />
+                  <BrowserRouter>
+                    <SessionTimeoutWarning />
+                    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading...</div></div>}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/search" element={<SearchResults />} />
+                        <Route path="/community" element={<Community />} />
+                        <Route path="/marine-gear-shop" element={<MarineGearShop />} />
+                        <Route path="/apply-captain" element={<ApplyCaptain />} />
+                        <Route path="/captain-login" element={<CaptainLogin />} />
+                        <Route path="/location/:location" element={<LocationLanding />} />
+                        <Route path="/admin/marine-products" element={<MarineProductsAdmin />} />
+                        <Route path="/payment-success" element={<PaymentSuccess />} />
+                        <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
+                        <Route path="/admin/affiliate-analytics" element={<AffiliateAnalytics />} />
+                        <Route path="/admin/captain-review" element={<AdminCaptainReview />} />
 
 
+                        <Route path="/captain/mobile-dashboard" element={<MobileCaptainDashboard />} />
+                        <Route path="/captains" element={<CaptainDirectory />} />
+                        <Route path="/captain/:id" element={<CaptainProfile />} />
+                        <Route path="*" element={<NotFound />} />
 
+                      </Routes>
 
-
-
-
-
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-
-
-            </Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
-      </UserProvider>
-    </I18nProvider>
-  </ThemeProvider>
+                    </Suspense>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </UserProvider>
+            </I18nProvider>
+          </FeatureFlagProvider>
+        </SiteSettingsProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  </ErrorBoundary>
 );
+
 
 
 

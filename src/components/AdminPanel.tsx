@@ -19,12 +19,15 @@ import { Shield, Users, Database, Phone, Download, Upload, Mail, BarChart, GitMe
 import { useNavigate } from 'react-router-dom';
 
 
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DeduplicationTool from './DeduplicationTool';
 import EmailNotificationManager from './EmailNotificationManager';
 import { ReminderSchedulerPanel } from './ReminderSchedulerPanel';
 import PhotoContestVoteAnalytics from './PhotoContestVoteAnalytics';
+import ConfigurationManager from './ConfigurationManager';
+
 
 
 
@@ -32,8 +35,8 @@ import PhotoContestVoteAnalytics from './PhotoContestVoteAnalytics';
 
 export default function AdminPanel() {
   const { user } = useUser();
-  const { toast } = useToast();
   const navigate = useNavigate();
+
   const [users, setUsers] = useState<Array<{ email: string; level: number }>>([]);
 
   const [newEmail, setNewEmail] = useState('');
@@ -247,6 +250,29 @@ export default function AdminPanel() {
             </Button>
           </div>
         </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configuration Variables Manager
+          </h3>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Settings className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-purple-900">Manage API Keys & Environment Variables</p>
+                <p className="text-sm text-purple-700 mt-1">
+                  Add, edit, and delete configuration variables like Firebase Server Key, APNS Key ID, and other API credentials. All variables are stored securely and can be marked as secret to hide values.
+                </p>
+                <p className="text-xs text-purple-600 mt-2">
+                  Features: Add/edit/delete configs, mark as secret, secure storage, easy management
+                </p>
+              </div>
+            </div>
+          </div>
+          <ConfigurationManager />
+        </div>
+
 
 
         <div className="space-y-4 pt-4 border-t">
@@ -653,20 +679,39 @@ export default function AdminPanel() {
             variant="default"
           >
             Manage Site Settings
+            Manage Site Settings
           </Button>
         </div>
 
-
-
-
-
-
-
-
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <FileCheck className="w-4 h-4" />
+            Photo Gallery Moderation
+          </h3>
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <FileCheck className="w-5 h-5 text-rose-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-rose-900">Trip Photo Gallery Moderation System</p>
+                <p className="text-sm text-rose-700 mt-1">
+                  Review and moderate user-uploaded fishing trip photos. Approve, reject, or flag content with automated quality checks, duplicate detection, and user reporting.
+                </p>
+                <p className="text-xs text-rose-600 mt-2">
+                  Features: Moderation queue, bulk actions, quality scoring, duplicate detection, user reports, photo guidelines, automated notifications
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/photo-moderation')} 
+            className="w-full"
+            variant="default"
+          >
+            Open Photo Moderation Panel
+          </Button>
+        </div>
 
       </CardContent>
     </Card>
-
-
   );
 }

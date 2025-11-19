@@ -21,7 +21,7 @@ export const SEO = ({
   structuredData
 }: SEOProps) => {
   const location = useLocation();
-  const currentUrl = `https://gulfcharterfinder.com${location.pathname}`;
+  const currentUrl = `https://gulfcoastcharters.com${location.pathname}`;
   const canonical = canonicalUrl || currentUrl;
 
   useEffect(() => {

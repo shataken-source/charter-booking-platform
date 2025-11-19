@@ -1,113 +1,137 @@
 import { useEffect, useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, CloudRain, Wind, Waves } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, Bell, BellOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface WeatherAlert {
-  type: 'wind' | 'rain' | 'wave' | 'general';
-  severity: 'warning' | 'danger';
-  title: string;
-  message: string;
+  id: string;
+  severity: string;
+  event: string;
+  description: string;
+  expires: string;
+  affected_bookings?: string[];
 }
 
-interface WeatherAlertSystemProps {
-  latitude: number;
-  longitude: number;
-  onAlert?: (alert: WeatherAlert) => void;
-}
-
-export default function WeatherAlertSystem({ latitude, longitude, onAlert }: WeatherAlertSystemProps) {
+export function WeatherAlertSystem() {
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
-    checkWeatherConditions();
-    const interval = setInterval(checkWeatherConditions, 300000); // Check every 5 minutes
+    checkNotificationPermission();
+    loadAlerts();
+    
+    const interval = setInterval(loadAlerts, 600000); // 10 min
     return () => clearInterval(interval);
-  }, [latitude, longitude]);
+  }, []);
 
-  const checkWeatherConditions = async () => {
+  const checkNotificationPermission = () => {
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationsEnabled(permission === 'granted');
+      
+      if (permission === 'granted') {
+        toast({ title: 'Notifications enabled', description: 'You will receive weather alerts' });
+      }
+    }
+  };
+
+  const loadAlerts = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('weather-api', {
-        body: { latitude, longitude }
+      const { data, error } = await supabase.functions.invoke('weather-alerts', {
+        body: { action: 'list' }
       });
-
-      if (error) throw error;
-
-      const newAlerts: WeatherAlert[] = [];
-
-      // Check wind conditions
-      if (data.current.windSpeed > 25) {
-        const alert: WeatherAlert = {
-          type: 'wind',
-          severity: 'danger',
-          title: 'Dangerous Wind Conditions',
-          message: `Wind speed ${data.current.windSpeed} mph with gusts up to ${data.current.windGust} mph. Charter operations should be suspended.`
-        };
-        newAlerts.push(alert);
-        notifyCaptainsAndCustomers(alert);
-      } else if (data.current.windSpeed > 15) {
-        newAlerts.push({
-          type: 'wind',
-          severity: 'warning',
-          title: 'High Wind Advisory',
-          message: `Wind speed ${data.current.windSpeed} mph. Exercise caution during charter operations.`
+      
+      if (!error && data?.alerts) {
+        setAlerts(data.alerts);
+        
+        // Check for new severe alerts
+        data.alerts.forEach((alert: WeatherAlert) => {
+          if ((alert.severity === 'Severe' || alert.severity === 'Extreme') && notificationsEnabled) {
+            showNotification(alert);
+          }
         });
       }
-
-      // Check visibility
-      if (data.current.visibility < 2) {
-        const alert: WeatherAlert = {
-          type: 'general',
-          severity: 'danger',
-          title: 'Low Visibility Warning',
-          message: `Visibility reduced to ${data.current.visibility} miles. Navigation hazardous.`
-        };
-        newAlerts.push(alert);
-        notifyCaptainsAndCustomers(alert);
-      }
-
-      setAlerts(newAlerts);
-      
-      if (newAlerts.length > 0 && onAlert) {
-        onAlert(newAlerts[0]);
-      }
-    } catch (err) {
-      console.error('Weather alert check failed:', err);
+    } catch (error) {
+      console.error('Failed to load alerts:', error);
     }
   };
 
-  const notifyCaptainsAndCustomers = async (alert: WeatherAlert) => {
-    toast({
-      title: alert.title,
-      description: alert.message,
-      variant: alert.severity === 'danger' ? 'destructive' : 'default'
-    });
-
-    // Send notifications via email/SMS (integrate with booking-notifications function)
-    try {
-      await supabase.functions.invoke('booking-notifications', {
-        body: {
-          type: 'weather_alert',
-          alert: alert
-        }
+  const showNotification = (alert: WeatherAlert) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(`⚠️ ${alert.event}`, {
+        body: alert.description.substring(0, 100) + '...',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: alert.id,
+        requireInteraction: true
       });
-    } catch (err) {
-      console.error('Failed to send weather notifications:', err);
     }
   };
 
-  if (alerts.length === 0) return null;
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'extreme': return 'bg-red-600 text-white';
+      case 'severe': return 'bg-orange-600 text-white';
+      case 'moderate': return 'bg-yellow-600 text-white';
+      default: return 'bg-blue-600 text-white';
+    }
+  };
 
   return (
-    <div className="space-y-3">
-      {alerts.map((alert, idx) => (
-        <Alert key={idx} variant={alert.severity === 'danger' ? 'destructive' : 'default'}>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{alert.title}</AlertTitle>
-          <AlertDescription>{alert.message}</AlertDescription>
-        </Alert>
-      ))}
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-lg">Weather Alerts</h3>
+          <Button
+            size="sm"
+            variant={notificationsEnabled ? 'default' : 'outline'}
+            onClick={requestNotificationPermission}
+          >
+            {notificationsEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+            <span className="ml-2">{notificationsEnabled ? 'Enabled' : 'Enable'}</span>
+          </Button>
+        </div>
+
+        {alerts.length === 0 ? (
+          <p className="text-gray-600">No active weather alerts</p>
+        ) : (
+          <div className="space-y-3">
+            {alerts.map(alert => (
+              <Card key={alert.id} className="p-3 border-l-4 border-red-500">
+                <div className="flex items-start gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className={getSeverityColor(alert.severity)}>
+                        {alert.severity}
+                      </Badge>
+                      <span className="font-bold">{alert.event}</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{alert.description}</p>
+                    <p className="text-xs text-gray-500">
+                      Expires: {new Date(alert.expires).toLocaleString()}
+                    </p>
+                    {alert.affected_bookings && alert.affected_bookings.length > 0 && (
+                      <Badge variant="outline" className="mt-2">
+                        {alert.affected_bookings.length} booking(s) affected
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

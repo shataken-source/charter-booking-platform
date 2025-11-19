@@ -6,47 +6,48 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 const AdvertiserEmailTemplate: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
-  const emailTemplate = `Subject: Advertising Opportunity with WhereToVacation
+  const emailTemplate = `Subject: Advertising Opportunity with Gulf Coast Charters
 
 Dear [Business Name],
 
-I hope this message finds you well. My name is [Your Name], and I'm reaching out from WhereToVacation (wheretovacation.com), the premier online platform connecting travelers with vacation destinations, activities, and charter experiences worldwide.
+I hope this message finds you well. My name is [Your Name], and I'm reaching out from Gulf Coast Charters (gulfcoastcharters.com), the premier online platform connecting anglers and boaters with charter fishing experiences, boat rentals, and marine services along the Gulf Coast.
 
 WHY ADVERTISE WITH US?
 
-Our platform attracts thousands of targeted visitors each month who are actively planning vacations and travel experiences. Here's what makes us unique:
+Our platform attracts thousands of targeted visitors each month who are actively planning fishing trips and marine adventures. Here's what makes us unique:
 
-• High-Intent Audience: Visitors are ready to spend on travel, accommodations, activities, and related services
-• Global Reach: Connect with travelers planning trips to destinations around the world
-• Engaged Community: Average session time of 5+ minutes with users actively researching vacation options
+• High-Intent Audience: Visitors are ready to book charters, rent boats, and purchase marine gear
+• Regional Focus: Connect with anglers and boaters specifically interested in Gulf Coast fishing
+• Engaged Community: Average session time of 5+ minutes with users actively researching charter options
 • Growing Platform: Rapidly expanding user base with 20%+ monthly growth
 
 ADVERTISING OPTIONS:
 
 1. Banner Ads - Premium placement on high-traffic pages
 2. Sidebar Ads - Consistent visibility throughout user browsing
-3. Sponsored Listings - Featured placement in destination and activity search results
+3. Featured Listings - Top placement in charter and boat rental search results
 4. Newsletter Sponsorship - Direct access to our email subscriber base
 
 IDEAL FOR:
 
-• Hotels and vacation rentals
-• Tour operators and activity providers
-• Restaurants and local businesses
-• Travel gear and equipment retailers
+• Marine equipment and tackle shops
+• Hotels and waterfront accommodations
+• Restaurants and seafood establishments
+• Boat dealers and marine services
 • Tourism boards and visitor bureaus
-• Transportation and car rental services
+• Fishing gear manufacturers and retailers
 
-We offer flexible packages to fit various budgets and goals. I'd love to schedule a brief call to discuss how we can help [Business Name] reach our highly targeted audience.
+We offer flexible packages to fit various budgets and goals. I'd love to schedule a brief call to discuss how we can help [Business Name] reach our highly targeted audience of fishing enthusiasts.
 
 Are you available for a 15-minute call this week to explore partnership opportunities?
 
 Best regards,
 [Your Name]
-WhereToVacation
+Gulf Coast Charters
 [Your Email]
 [Your Phone]
-wheretovacation.com`;
+gulfcoastcharters.com`;
+
 
 
   const handleCopy = () => {
@@ -61,8 +62,9 @@ wheretovacation.com`;
         <CardHeader>
           <CardTitle>Advertiser Email Template</CardTitle>
           <p className="text-sm text-gray-600">
-            Professional email template for inviting businesses to advertise on WhereToVacation
+            Professional email template for inviting businesses to advertise on Gulf Coast Charters
           </p>
+
 
         </CardHeader>
 

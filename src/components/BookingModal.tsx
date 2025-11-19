@@ -157,10 +157,12 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Book {charter.businessName}</DialogTitle>
+      <DialogContent className="max-w-md border-t-4 border-t-blue-600">
+        <DialogHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+          <DialogTitle className="text-white text-xl">Book Your Gulf Coast Fishing Adventure</DialogTitle>
+          <p className="text-blue-100 text-sm">{charter.businessName} - Reserve your spot today</p>
         </DialogHeader>
+
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -331,9 +333,10 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
           </div>
 
 
-          <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={loading}>
-            {loading ? 'Processing...' : 'Proceed to Payment'}
+          <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold" disabled={loading}>
+            {loading ? 'Processing...' : 'Proceed to Secure Payment'}
           </Button>
+
         </form>
       </DialogContent>
     </Dialog>

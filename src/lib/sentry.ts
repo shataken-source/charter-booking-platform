@@ -1,5 +1,4 @@
 // Sentry is disabled - no DSN configured
 export const initSentry = () => {
-  // Sentry initialization disabled
-  console.log('Sentry monitoring is disabled');
+  // Sentry initialization disabled - configure in production
 };

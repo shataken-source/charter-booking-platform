@@ -1,86 +1,73 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Waves, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TideData {
   time: string;
   height: number;
-  type: 'high' | 'low';
+  type: 'High' | 'Low';
 }
 
-interface TideChartProps {
-  location: string;
-}
+export function TideChart({ stationId }: { stationId: string }) {
+  const [tides, setTides] = useState<TideData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-// Mock tide data - in production, integrate with NOAA Tides API
-const generateTideData = (): TideData[] => {
-  const now = new Date();
-  const tides: TideData[] = [];
-  
-  for (let i = 0; i < 4; i++) {
-    const highTime = new Date(now);
-    highTime.setHours(6 + (i * 12), 15, 0);
-    
-    const lowTime = new Date(now);
-    lowTime.setHours(0 + (i * 12), 30, 0);
-    
-    if (highTime.getDate() === now.getDate() || highTime.getDate() === now.getDate() + 1) {
-      tides.push({
-        time: highTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        height: 3.2 + Math.random() * 1.5,
-        type: 'high'
-      });
-    }
-    
-    if (lowTime.getDate() === now.getDate() || lowTime.getDate() === now.getDate() + 1) {
-      tides.push({
-        time: lowTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        height: 0.3 + Math.random() * 0.5,
-        type: 'low'
-      });
-    }
-  }
-  
-  return tides.sort((a, b) => {
-    const timeA = new Date(`1/1/2000 ${a.time}`).getTime();
-    const timeB = new Date(`1/1/2000 ${b.time}`).getTime();
-    return timeA - timeB;
-  }).slice(0, 4);
-};
+  useEffect(() => {
+    fetchTideData();
+  }, [stationId]);
 
-export default function TideChart({ location }: TideChartProps) {
-  const tides = generateTideData();
-  
-  return (
-    <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Waves className="w-5 h-5 text-blue-500" />
-        <h3 className="text-lg font-semibold">Tide Chart</h3>
-      </div>
+  const fetchTideData = async () => {
+    try {
+      const cached = localStorage.getItem(`tide_${stationId}`);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 3600000) {
+          setTides(data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=today&station=${stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&units=english&interval=hilo&format=json`;
       
-      <div className="space-y-3">
-        {tides.map((tide, idx) => (
-          <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3">
-              {tide.type === 'high' ? (
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-orange-500" />
-              )}
-              <div>
-                <p className="font-semibold capitalize">{tide.type} Tide</p>
-                <p className="text-sm text-muted-foreground">{tide.time}</p>
-              </div>
+      const response = await fetch(url);
+      const json = await response.json();
+      
+      const tideData = json.predictions?.slice(0, 4).map((t: any) => ({
+        time: new Date(t.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        height: parseFloat(t.v),
+        type: t.type === 'H' ? 'High' : 'Low'
+      })) || [];
+
+      setTides(tideData);
+      localStorage.setItem(`tide_${stationId}`, JSON.stringify({ data: tideData, timestamp: Date.now() }));
+    } catch (error) {
+      toast.error('Failed to load tide data');
+    }
+    setLoading(false);
+  };
+
+  if (loading) return <Card className="p-4">Loading tide data...</Card>;
+
+  return (
+    <Card className="p-4">
+      <h3 className="font-bold mb-3">Today's Tides</h3>
+      <div className="space-y-2">
+        {tides.map((tide, i) => (
+          <div key={i} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+            <div className="flex items-center gap-2">
+              {tide.type === 'High' ? <ArrowUp className="w-4 h-4 text-blue-600" /> : <ArrowDown className="w-4 h-4 text-gray-600" />}
+              <span className="font-semibold">{tide.type} Tide</span>
             </div>
             <div className="text-right">
-              <p className="font-semibold">{tide.height.toFixed(1)} ft</p>
+              <div className="font-semibold">{tide.time}</div>
+              <div className="text-sm text-gray-600">{tide.height.toFixed(1)}ft</div>
             </div>
           </div>
         ))}
       </div>
-      
-      <p className="text-xs text-muted-foreground mt-4">
-        Tide data for {location}. Times shown in local timezone.
-      </p>
     </Card>
   );
 }

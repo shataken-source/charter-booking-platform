@@ -13,7 +13,12 @@ export default function AutomatedEmailSequence() {
     { id: 2, name: "Pre-Trip Reminder", delay: 24, active: true },
     { id: 3, name: "Day Before Reminder", delay: 48, active: true },
     { id: 4, name: "Post-Trip Follow-up", delay: 168, active: true },
+    { id: 5, name: "Cart Abandonment", delay: 2, active: true },
+    { id: 6, name: "Re-engagement (30 days)", delay: 720, active: true },
+    { id: 7, name: "Birthday Special", delay: 0, active: true },
+    { id: 8, name: "Seasonal Promotion", delay: 0, active: true },
   ]);
+
 
   const [selectedSequence, setSelectedSequence] = useState(sequences[0]);
   const [subject, setSubject] = useState("Your Booking Confirmation");

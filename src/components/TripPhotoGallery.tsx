@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { X, Heart, Share2, MapPin, Fish, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Heart, Share2, MapPin, Fish, User, ChevronLeft, ChevronRight, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Photo {
   id: string;
@@ -24,9 +26,15 @@ const mockPhotos: Photo[] = [
 ];
 
 export default function TripPhotoGallery() {
+  const { toast } = useToast();
   const [photos, setPhotos] = useState(mockPhotos);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const reportPhoto = (id: string) => {
+    toast({ title: 'Photo reported', description: 'Thank you. Our moderation team will review this photo.' });
+  };
+
 
   const toggleLike = (id: string) => {
     setPhotos(photos.map(p => p.id === id ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p));

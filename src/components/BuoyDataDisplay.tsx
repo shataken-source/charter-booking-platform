@@ -1,124 +1,89 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Waves, Thermometer, Wind, Eye, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Card } from '@/components/ui/card';
+import { Waves, Wind, Thermometer, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface BuoyData {
-  buoyId: string;
-  buoyInfo: { name: string; location: string; lat: number; lon: number };
-  waveHeight: number | null;
-  waterTemp: number | null;
-  windSpeed: number | null;
-  windGust: number | null;
-  visibility: number | null;
+  station: string;
+  waveHeight: number;
+  wavePeriod: number;
+  windSpeed: number;
+  windDirection: string;
+  waterTemp: number;
+  visibility: number;
   timestamp: string;
 }
 
-interface BuoyDataDisplayProps {
-  buoyId: string;
-}
-
-export default function BuoyDataDisplay({ buoyId }: BuoyDataDisplayProps) {
-  const [buoyData, setBuoyData] = useState<BuoyData | null>(null);
-  const [alerts, setAlerts] = useState<any[]>([]);
+export function BuoyDataDisplay({ stationId }: { stationId: string }) {
+  const [data, setData] = useState<BuoyData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBuoyData();
-    const interval = setInterval(fetchBuoyData, 300000); // Refresh every 5 min
-    return () => clearInterval(interval);
-  }, [buoyId]);
+  }, [stationId]);
 
   const fetchBuoyData = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('noaa-buoy-data', {
-        body: { buoyId }
-      });
-
-      if (error) throw error;
-      if (data.success) {
-        setBuoyData(data.data);
-        setAlerts(data.alerts || []);
+      const cached = localStorage.getItem(`buoy_${stationId}`);
+      if (cached) {
+        const { data: cachedData, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 1800000) {
+          setData(cachedData);
+          setLoading(false);
+          return;
+        }
       }
-    } catch (err) {
-      console.error('Error fetching buoy data:', err);
-    } finally {
-      setLoading(false);
+
+      const response = await fetch(`https://www.ndbc.noaa.gov/data/realtime2/${stationId}.txt`);
+      const text = await response.text();
+      const lines = text.split('\n');
+      const dataLine = lines[2]?.split(/\s+/);
+
+      if (dataLine) {
+        const buoyData: BuoyData = {
+          station: stationId,
+          waveHeight: parseFloat(dataLine[8]) || 0,
+          wavePeriod: parseFloat(dataLine[9]) || 0,
+          windSpeed: parseFloat(dataLine[6]) || 0,
+          windDirection: dataLine[5] || 'N/A',
+          waterTemp: parseFloat(dataLine[14]) || 0,
+          visibility: parseFloat(dataLine[13]) || 10,
+          timestamp: new Date().toISOString()
+        };
+
+        setData(buoyData);
+        localStorage.setItem(`buoy_${stationId}`, JSON.stringify({ data: buoyData, timestamp: Date.now() }));
+      }
+    } catch (error) {
+      toast.error('Failed to load buoy data');
     }
+    setLoading(false);
   };
 
-  if (loading) return <div className="animate-pulse">Loading buoy data...</div>;
-  if (!buoyData) return <div>No buoy data available</div>;
+  if (loading) return <Card className="p-4">Loading buoy data...</Card>;
+  if (!data) return <Card className="p-4">No data available</Card>;
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>NOAA Buoy {buoyData.buoyId}</span>
-            <Badge variant="outline">{buoyData.buoyInfo.name}</Badge>
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">{buoyData.buoyInfo.location}</p>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-2">
-            <Waves className="h-5 w-5 text-blue-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Wave Height</p>
-              <p className="text-lg font-bold">
-                {buoyData.waveHeight ? `${buoyData.waveHeight} ft` : 'N/A'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Thermometer className="h-5 w-5 text-orange-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Water Temp</p>
-              <p className="text-lg font-bold">
-                {buoyData.waterTemp ? `${buoyData.waterTemp}°F` : 'N/A'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Wind className="h-5 w-5 text-gray-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Wind Speed</p>
-              <p className="text-lg font-bold">
-                {buoyData.windSpeed ? `${buoyData.windSpeed} kt` : 'N/A'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-purple-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Visibility</p>
-              <p className="text-lg font-bold">
-                {buoyData.visibility ? `${buoyData.visibility} nm` : 'N/A'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {alerts.length > 0 && (
-        <Card className="border-orange-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-600">
-              <AlertTriangle className="h-5 w-5" />
-              Marine Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {alerts.map((alert, idx) => (
-              <div key={idx} className="p-3 bg-orange-50 rounded-lg">
-                <p className="font-semibold">{alert.event}</p>
-                <p className="text-sm text-muted-foreground">{alert.headline}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <Card className="p-4">
+      <h3 className="font-bold mb-3">NOAA Buoy {data.station}</h3>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="flex items-center gap-2">
+          <Waves className="w-4 h-4 text-blue-600" />
+          <div><div className="text-gray-600">Wave Height</div><div className="font-semibold">{data.waveHeight}ft</div></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Wind className="w-4 h-4 text-blue-600" />
+          <div><div className="text-gray-600">Wind Speed</div><div className="font-semibold">{data.windSpeed}mph</div></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Thermometer className="w-4 h-4 text-blue-600" />
+          <div><div className="text-gray-600">Water Temp</div><div className="font-semibold">{data.waterTemp}°F</div></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Eye className="w-4 h-4 text-blue-600" />
+          <div><div className="text-gray-600">Visibility</div><div className="font-semibold">{data.visibility}mi</div></div>
+        </div>
+      </div>
+    </Card>
   );
 }

@@ -79,9 +79,8 @@ export default function CaptainVerificationBadges({
               {insuranceVerifiedAt && <p className="text-xs text-gray-400">Verified: {formatVerifiedDate(insuranceVerifiedAt)}</p>}
             </TooltipContent>
           </Tooltip>
+        )}
 
-
-        
         {isTopRated && (
           <Tooltip>
             <TooltipTrigger>

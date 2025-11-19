@@ -1,37 +1,84 @@
-# OCR Integration Reminder
+# OCR Document Processing & Captain Document Management
 
-## 🔔 PENDING TASK: Integrate OCR for Document Processing
+## Overview
+The system now includes comprehensive captain document management with OCR processing, renewal reminders, push notifications, and email capabilities.
 
-### What This Will Do
-Automatically extract expiration dates, registration numbers, and policy details from uploaded boat documents to reduce manual data entry and improve accuracy.
+## Components Created
 
-### Required Setup
-1. **Google Cloud Vision API Key**
-   - Go to Google Cloud Console
-   - Enable Cloud Vision API
-   - Create API credentials
-   - Add `GOOGLE_CLOUD_VISION_API_KEY` to Supabase secrets
+### 1. ComprehensiveDocumentManager.tsx
+- Upload any document type (USCG License, Insurance, Certifications, etc.)
+- OCR processing via Google Cloud Vision API
+- Automatic field extraction from scanned documents
+- Email documents to captain
+- Download documents
+- Delete documents
+- Expiration date tracking
+- Renewal reminders (30 days before expiration)
 
-### Implementation Plan
-1. Create Supabase Edge Function: `ocr-document-processor`
-2. Process uploaded documents with Google Cloud Vision API
-3. Extract key information:
-   - Expiration dates
-   - Registration numbers
-   - Policy numbers
-   - Vessel names
-   - Insurance amounts
-4. Auto-populate form fields with extracted data
-5. Allow manual override if OCR is incorrect
+### 2. Edge Functions
 
-### Benefits
-- ✅ Reduce manual data entry by 80%
-- ✅ Improve accuracy of document details
-- ✅ Faster document upload process
-- ✅ Automatic validation of extracted data
+#### ocr-document-processor
+- Uses Google Cloud Vision API (GOOGLE_CLOUD_VISION_API_KEY)
+- Extracts text from uploaded documents
+- Parses fields based on document type:
+  - USCG License: license number, expiration date
+  - Insurance: policy number, effective date
+  - Boat Registration: registration number
 
-### Estimated Time
-2-3 hours for full implementation
+#### document-renewal-reminders
+- Checks documents for upcoming expirations
+- Sends email reminders at 30, 14, 7, 3, 1 days before expiration
+- Uses SendGrid for email notifications
 
----
-**Status**: ⏸️ Paused - Waiting for Google Cloud Vision API setup
+### 3. Push Notifications (pushNotifications.ts)
+- Browser push notification support
+- Service worker integration
+- Permission management
+- Subscription storage
+
+## Usage in Mobile Captain Dashboard
+
+Add to MobileCaptainDashboard.tsx:
+```tsx
+import ComprehensiveDocumentManager from '@/components/ComprehensiveDocumentManager';
+
+// In the tabs section, add:
+<TabsContent value="documents">
+  <ComprehensiveDocumentManager />
+</TabsContent>
+```
+
+## Document Types Supported
+- USCG License
+- Insurance Policy
+- Boat Registration
+- Safety Certificate
+- First Aid Certification
+- CPR Certification
+- Medical Certificate
+- Drug Test Results
+- Background Check
+- Business License
+- Tax Documents
+- Other (custom)
+
+## Features
+✅ Upload/Edit/Delete any document
+✅ OCR text extraction
+✅ Auto-fill forms from scanned documents
+✅ Email copies of documents
+✅ Expiration tracking
+✅ Renewal reminders (email)
+✅ Push notifications (browser)
+✅ Offline document access (PWA)
+
+## Integration Steps
+1. Component already created: ComprehensiveDocumentManager.tsx
+2. Edge functions deployed: ocr-document-processor, document-renewal-reminders
+3. Add to captain dashboard tabs
+4. Test OCR by uploading a license or insurance document
+5. Set expiration dates to test reminders
+
+## API Keys Required
+- GOOGLE_CLOUD_VISION_API_KEY (already configured)
+- SENDGRID_API_KEY (already configured)
