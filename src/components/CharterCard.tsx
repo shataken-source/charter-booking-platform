@@ -1,12 +1,13 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GitCompare, Award, User } from 'lucide-react';
-
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAppContext } from '@/contexts/AppContext';
 import SocialShare from './SocialShare';
 import OptimizedImage from './OptimizedImage';
 import ClaimListingModal from './ClaimListingModal';
 import CaptainVerificationBadges from './CaptainVerificationBadges';
+import CustomerBookingFlow from './booking/CustomerBookingFlow';
 
 
 
@@ -36,8 +37,10 @@ interface CharterCardProps {
 
 const CharterCard = memo(function CharterCard(props: CharterCardProps) {
   const [showClaimModal, setShowClaimModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const { addToCompare, compareCharters } = useAppContext();
   const isInCompare = compareCharters.includes(props.id);
+
 
   const handleViewDetails = () => {
     window.location.hash = `#charter/${props.id}`;
@@ -162,18 +165,18 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
             />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-3">
+            <button
+              onClick={() => setShowBookingModal(true)}
+              className="flex-1 bg-green-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-green-700 shadow-md"
+            >
+              Book Now
+            </button>
             <button
               onClick={handleViewDetails}
               className="flex-1 gradient-primary text-white py-2.5 px-4 rounded-xl transition font-semibold hover:opacity-90 shadow-md"
             >
-              View Details
-            </button>
-            <button
-              onClick={handleContact}
-              className="flex-1 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 py-2.5 px-4 rounded-xl transition font-semibold"
-            >
-              Contact
+              Details
             </button>
           </div>
 
@@ -186,7 +189,14 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
         listingId={props.id}
         listingName={props.businessName}
       />
+      
+      <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CustomerBookingFlow charter={props} onClose={() => setShowBookingModal(false)} />
+        </DialogContent>
+      </Dialog>
     </>
+
   );
 
 });

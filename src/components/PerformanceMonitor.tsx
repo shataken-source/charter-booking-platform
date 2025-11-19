@@ -1,65 +1,87 @@
-import { useEffect, useState } from 'react';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Activity, Zap } from 'lucide-react';
-
-interface PerformanceMetrics {
-  FCP?: number;
-  LCP?: number;
-  FID?: number;
-  CLS?: number;
-  TTFB?: number;
-}
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { checkDatabaseHealth, DatabaseHealthStatus } from '@/utils/databaseHealthCheck';
+import { runStressTest, StressTestResult } from '@/utils/stressTesting';
+import { Activity, Database, Zap, AlertTriangle } from 'lucide-react';
 
 export default function PerformanceMonitor() {
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({});
-  const [isVisible, setIsVisible] = useState(false);
+  const [health, setHealth] = useState<DatabaseHealthStatus | null>(null);
+  const [stressTest, setStressTest] = useState<StressTestResult | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Only show in development
-    if (import.meta.env.DEV) {
-      setIsVisible(true);
-      
-      // Listen for performance entries
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          if (entry.entryType === 'paint') {
-            setMetrics(prev => ({
-              ...prev,
-              FCP: entry.startTime,
-            }));
-          }
-        }
-      });
-      
-      observer.observe({ entryTypes: ['paint', 'largest-contentful-paint'] });
-      
-      return () => observer.disconnect();
-    }
-  }, []);
+  const checkHealth = async () => {
+    setLoading(true);
+    const result = await checkDatabaseHealth();
+    setHealth(result);
+    setLoading(false);
+  };
 
-  if (!isVisible) return null;
-
-  const getRating = (value: number, thresholds: [number, number]) => {
-    if (value <= thresholds[0]) return 'good';
-    if (value <= thresholds[1]) return 'needs-improvement';
-    return 'poor';
+  const runTest = async () => {
+    setLoading(true);
+    const result = await runStressTest(1000, 5);
+    setStressTest(result);
+    setLoading(false);
   };
 
   return (
-    <Card className="fixed bottom-4 right-4 p-4 w-64 z-50 bg-background/95 backdrop-blur">
-      <div className="flex items-center gap-2 mb-3">
-        <Activity className="w-4 h-4" />
-        <h3 className="font-semibold text-sm">Performance</h3>
-      </div>
-      <div className="space-y-2 text-xs">
-        {Object.entries(metrics).map(([key, value]) => (
-          <div key={key} className="flex justify-between items-center">
-            <span>{key}</span>
-            <Badge variant="outline">{Math.round(value)}ms</Badge>
-          </div>
-        ))}
-      </div>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Database Health Monitor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={checkHealth} disabled={loading}>
+            {loading ? 'Checking...' : 'Check Database Health'}
+          </Button>
+          {health && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span>Status:</span>
+                <Badge variant={health.status === 'healthy' ? 'default' : 'destructive'}>
+                  {health.status}
+                </Badge>
+              </div>
+              <p>Response Time: {health.responseTime}ms</p>
+              {health.errors.length > 0 && (
+                <div className="text-red-600">
+                  <AlertTriangle className="h-4 w-4 inline mr-2" />
+                  {health.errors.join(', ')}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Stress Test (1000 Concurrent Users)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={runTest} disabled={loading}>
+            {loading ? 'Running Test...' : 'Run Stress Test'}
+          </Button>
+          {stressTest && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>Total Requests: {stressTest.totalRequests}</div>
+              <div>Successful: {stressTest.successfulRequests}</div>
+              <div>Failed: {stressTest.failedRequests}</div>
+              <div>Avg Response: {stressTest.averageResponseTime.toFixed(2)}ms</div>
+              <div>Min Response: {stressTest.minResponseTime}ms</div>
+              <div>Max Response: {stressTest.maxResponseTime}ms</div>
+              <div className="col-span-2">RPS: {stressTest.requestsPerSecond.toFixed(2)}</div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

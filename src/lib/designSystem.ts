@@ -1,22 +1,38 @@
-// Design System Tokens for Gulf Coast Charters
+// Gulf Coast Charters Design System - Water & Sand Theme
 export const colors = {
   primary: {
-    gradient: 'from-blue-600 to-cyan-600',
-    solid: 'bg-blue-600',
-    text: 'text-blue-600',
-    hover: 'hover:bg-blue-700'
+    gradient: 'from-blue-500 via-cyan-400 to-teal-500',
+    solid: 'bg-blue-500',
+    text: 'text-blue-500',
+    hover: 'hover:bg-blue-600'
   },
   secondary: {
-    gradient: 'from-cyan-500 to-blue-500',
-    solid: 'bg-cyan-600',
-    text: 'text-cyan-600'
+    gradient: 'from-amber-200 via-yellow-100 to-orange-200',
+    solid: 'bg-amber-100',
+    text: 'text-amber-700'
+  },
+  ocean: {
+    deep: 'bg-blue-900',
+    medium: 'bg-blue-600',
+    light: 'bg-cyan-400',
+    foam: 'bg-cyan-100'
+  },
+  sand: {
+    dark: 'bg-amber-200',
+    medium: 'bg-yellow-100',
+    light: 'bg-orange-50'
+  },
+  accent: {
+    coral: 'bg-orange-400',
+    seaweed: 'bg-teal-600',
+    sunset: 'bg-rose-400'
   }
 };
 
 export const shadows = {
-  card: 'shadow-lg',
-  cardHover: 'hover:shadow-xl',
-  button: 'shadow-md'
+  card: 'shadow-lg shadow-blue-100/50',
+  cardHover: 'hover:shadow-xl hover:shadow-cyan-200/50',
+  button: 'shadow-md shadow-blue-200/30'
 };
 
 export const spacing = {

@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { rateLimiter, RATE_LIMITS } from '@/lib/rateLimiter';
 import DOMPurify from 'isomorphic-dompurify';
 
 export default function CaptainApplicationFormSecure() {
-  const { toast } = useToast();
+
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     fullName: '', email: '', phone: '', location: '', uscgLicense: '',
     yearsExperience: '', specialties: '', bio: '', insuranceProvider: '', insuranceCoverage: ''
@@ -23,7 +24,8 @@ export default function CaptainApplicationFormSecure() {
 
   const handleFileChange = (type: string, file: File | null) => {
     if (file && file.size > 10 * 1024 * 1024) {
-      toast({ title: 'Error', description: 'File too large (max 10MB)', variant: 'destructive' });
+      toast.error('File too large (max 10MB)');
+
       return;
     }
     setFiles(prev => ({ ...prev, [type]: file }));
@@ -49,7 +51,8 @@ export default function CaptainApplicationFormSecure() {
     
     // Rate limiting
     if (!rateLimiter.limit(`captain_app_${formData.email}`, RATE_LIMITS.AUTH)) {
-      toast({ title: 'Error', description: 'Too many attempts. Please wait.', variant: 'destructive' });
+      toast.error('Too many attempts. Please wait.');
+
       return;
     }
 
@@ -90,7 +93,7 @@ export default function CaptainApplicationFormSecure() {
         status: 'pending'
       });
 
-      toast({ title: 'Success', description: 'Application submitted! Check your email.' });
+      toast.success('Application submitted! Check your email.');
       
       setFormData({
         fullName: '', email: '', phone: '', location: '', uscgLicense: '',
@@ -98,7 +101,8 @@ export default function CaptainApplicationFormSecure() {
       });
       setFiles({ uscgLicense: null, insurance: null, certifications: null });
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message || 'Failed to submit application');
+
     } finally {
       setLoading(false);
     }

@@ -1,15 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Anchor, MapPin, Users, Award, Globe } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Anchor, MapPin, Users, Award, Globe, Fish } from 'lucide-react';
 import { featuredCharters } from '@/data/featuredCharters';
 import { SuggestionBox } from './SuggestionBox';
+import CatchLogger from './CatchLogger';
+import CatchLeaderboard from './CatchLeaderboard';
+import { CatchOfTheDay } from './CatchOfTheDay';
+import { FishingBuddyFinder } from './FishingBuddyFinder';
+import { TripPhotoAlbum } from './TripPhotoAlbum';
+import { LaunchCelebrationPopup } from './LaunchCelebrationPopup';
+
+
 
 export default function AppLayout() {
   const [selectedCharter, setSelectedCharter] = useState<any>(null);
   const [showSuggestionBox, setShowSuggestionBox] = useState(false);
+  const [showCatchLogger, setShowCatchLogger] = useState(false);
+  const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
+
 
   return (
     <div className="min-h-screen bg-white">
+      <LaunchCelebrationPopup />
+
+
       <nav className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
@@ -19,12 +34,19 @@ export default function AppLayout() {
             </div>
             <div className="hidden md:flex space-x-4 items-center text-sm">
               <button onClick={() => document.getElementById('charters')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-100">Charters</button>
+              <button onClick={() => document.getElementById('leaderboard')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-100">Leaderboard</button>
+              <button onClick={() => setShowCatchLogger(true)} className="hover:text-blue-100 flex items-center gap-1">
+                <Fish className="w-4 h-4" />
+                Log Catch
+              </button>
               <button onClick={() => setShowSuggestionBox(true)} className="hover:text-blue-100">Feedback</button>
-              <Button size="sm" className="bg-white text-blue-600">Login</Button>
+              <Button size="sm" className="bg-white text-blue-600" data-auth-trigger="signup">Login</Button>
+
             </div>
           </div>
         </div>
       </nav>
+
 
       <section className="relative h-[500px] flex items-center justify-center text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-cyan-900/60 z-10"></div>
@@ -64,6 +86,22 @@ export default function AppLayout() {
         </div>
       </section>
 
+      <section className="container mx-auto px-4 py-12 space-y-12">
+        <CatchOfTheDay />
+        
+        <div id="leaderboard">
+          <CatchLeaderboard key={refreshLeaderboard} />
+        </div>
+
+        <TripPhotoAlbum />
+
+        <FishingBuddyFinder />
+      </section>
+
+
+
+
+
       {selectedCharter && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCharter(null)}>
           <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-t-4 border-t-blue-600" onClick={(e) => e.stopPropagation()}>
@@ -98,6 +136,18 @@ export default function AppLayout() {
           <div className="max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
             <SuggestionBox userType="customer" />
             <Button className="w-full mt-4" variant="outline" onClick={() => setShowSuggestionBox(false)}>Close</Button>
+          </div>
+        </div>
+      )}
+
+      {showCatchLogger && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowCatchLogger(false)}>
+          <div className="max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <CatchLogger onSuccess={() => {
+              setShowCatchLogger(false);
+              setRefreshLeaderboard(prev => prev + 1);
+            }} />
+            <Button className="w-full mt-4" variant="outline" onClick={() => setShowCatchLogger(false)}>Close</Button>
           </div>
         </div>
       )}

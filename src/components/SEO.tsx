@@ -9,7 +9,10 @@ interface SEOProps {
   type?: string;
   canonicalUrl?: string;
   structuredData?: object;
+  ogSiteName?: string;
+  twitterSite?: string;
 }
+
 
 export const SEO = ({
   title = 'Gulf Charter Finder - Find & Book Charter Boats',
@@ -18,8 +21,11 @@ export const SEO = ({
   image = '/og.jpg',
   type = 'website',
   canonicalUrl,
-  structuredData
+  structuredData,
+  ogSiteName = 'Gulf Coast Charters',
+  twitterSite = '@GulfCharters'
 }: SEOProps) => {
+
   const location = useLocation();
   const currentUrl = `https://gulfcoastcharters.com${location.pathname}`;
   const canonical = canonicalUrl || currentUrl;
@@ -38,12 +44,17 @@ export const SEO = ({
     updateMetaTag('og:type', type, 'property');
     updateMetaTag('og:url', currentUrl, 'property');
     updateMetaTag('og:image', image, 'property');
+    updateMetaTag('og:site_name', ogSiteName, 'property');
+    updateMetaTag('og:image:width', '1200', 'property');
+    updateMetaTag('og:image:height', '630', 'property');
     
     // Twitter
     updateMetaTag('twitter:card', 'summary_large_image', 'name');
     updateMetaTag('twitter:title', title, 'name');
     updateMetaTag('twitter:description', description, 'name');
     updateMetaTag('twitter:image', image, 'name');
+    updateMetaTag('twitter:site', twitterSite, 'name');
+
 
     // Canonical URL
     updateCanonicalLink(canonical);

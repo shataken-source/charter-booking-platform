@@ -95,6 +95,21 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
     setLoading(true);
 
     try {
+      // Final availability check before booking
+      const { data: availCheck } = await supabase.functions.invoke('availability-manager', {
+        body: { 
+          action: 'check', 
+          captainId: charter.captainId || charter.id,
+          date: formData.date
+        }
+      });
+
+      if (availCheck?.hasConflict) {
+        toast.error('This date was just booked by someone else. Please select another date.');
+        setLoading(false);
+        return;
+      }
+
       // Store booking details for success page including email info
       sessionStorage.setItem('pendingBooking', JSON.stringify({
         charterName: charter.businessName,
@@ -110,7 +125,6 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
       }));
 
 
-      // Create Stripe checkout session
       // Create Stripe checkout session
       const { data, error } = await supabase.functions.invoke('stripe-checkout', {
         body: {
@@ -141,6 +155,25 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
 
       if (error) throw error;
 
+      // Send instant booking confirmation
+      if (data.bookingId) {
+        await supabase.functions.invoke('instant-booking-confirmation', {
+          body: {
+            bookingId: data.bookingId,
+            captainId: charter.captainId || charter.id,
+            customerId: data.customerId,
+            customerEmail: formData.email,
+            customerPhone: formData.phone,
+            bookingDetails: {
+              charterName: charter.businessName,
+              date: formData.date,
+              captainName: charter.captainName || 'Your Captain',
+              price: finalPrice
+            }
+          }
+        });
+      }
+
       // Redirect to Stripe checkout
       if (data.url) {
         window.location.href = data.url;
@@ -148,11 +181,13 @@ export default function BookingModal({ isOpen, onClose, charter }: BookingModalP
 
     } catch (error) {
       console.error('Booking error:', error);
-      alert('Failed to create booking. Please try again.');
+      toast.error('Failed to create booking. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+
 
 
   return (

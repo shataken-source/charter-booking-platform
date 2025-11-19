@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
-import { Shield, Users, Database, Phone, Download, Upload, Mail, BarChart, GitMerge, Clock, Trophy, KeyRound, FileCheck, Send, List, MessageSquare, UserCog, LineChart, ShoppingBag, TrendingUp, Settings } from 'lucide-react';
+import { Shield, Users, Database, Phone, Download, Upload, Mail, BarChart, GitMerge, Clock, Trophy, KeyRound, FileCheck, Send, List, MessageSquare, UserCog, LineChart, ShoppingBag, TrendingUp, Settings, DollarSign, Activity } from 'lucide-react';
+
 
 
 
@@ -27,6 +28,8 @@ import EmailNotificationManager from './EmailNotificationManager';
 import { ReminderSchedulerPanel } from './ReminderSchedulerPanel';
 import PhotoContestVoteAnalytics from './PhotoContestVoteAnalytics';
 import ConfigurationManager from './ConfigurationManager';
+import FeatureFlagManager from './FeatureFlagManager';
+
 
 
 
@@ -653,6 +656,27 @@ export default function AdminPanel() {
             Open Affiliate Analytics
           </Button>
         </div>
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Feature Flags Manager
+          </h3>
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Settings className="w-5 h-5 text-indigo-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-indigo-900">Control All Website Sections</p>
+                <p className="text-sm text-indigo-700 mt-1">
+                  Turn on/off any section of the website including promotions page, hero section, featured charters, weather widgets, message board, and more.
+                </p>
+                <p className="text-xs text-indigo-600 mt-2">
+                  Features: Toggle visibility of pages, homepage sections, features, community tools, marketing elements, and monetization components
+                </p>
+              </div>
+            </div>
+          </div>
+          <FeatureFlagManager />
+        </div>
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
@@ -679,9 +703,9 @@ export default function AdminPanel() {
             variant="default"
           >
             Manage Site Settings
-            Manage Site Settings
           </Button>
         </div>
+
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
@@ -710,6 +734,168 @@ export default function AdminPanel() {
             Open Photo Moderation Panel
           </Button>
         </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Membership & Permissions Manager
+          </h3>
+          <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Users className="w-5 h-5 text-pink-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-pink-900">Manage User & Captain Memberships</p>
+                <p className="text-sm text-pink-700 mt-1">
+                  Control membership status and permissions for all users and captains. Grant or revoke access to video uploads, featured listings, and priority support.
+                </p>
+                <p className="text-xs text-pink-600 mt-2">
+                  Features: Membership status, permission toggles, user search, role management
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/memberships')} 
+            className="w-full"
+            variant="default"
+          >
+            Manage Memberships
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
+            Default Ads Manager
+          </h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-900">Manage Fallback Advertisements</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Create and manage default ads that display when no captain ads are active. Priority: Captain Ads → Google Ads → Default Ads
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/default-ads')} 
+            className="w-full"
+            variant="default"
+          >
+            Manage Default Ads
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Monetization Dashboard
+          </h3>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <TrendingUp className="w-5 h-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-green-900">Revenue Analytics & Strategies</p>
+                <p className="text-sm text-green-700 mt-1">
+                  Track all 10 monetization strategies: premium listings, sponsored content, lead gen, memberships, commissions, affiliates, email marketing, banner ads, video ads, and corporate accounts
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/monetization')} 
+            className="w-full"
+            variant="default"
+          >
+            View Monetization Dashboard
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Enterprise Security Dashboard
+          </h3>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Shield className="w-5 h-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-red-900">Security Monitoring & Compliance</p>
+                <p className="text-sm text-red-700 mt-1">
+                  Monitor SSL/TLS encryption, 2FA, WebAuthn, session security, rate limiting, RLS, audit logs, and OAuth status
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/security')} 
+            className="w-full"
+            variant="default"
+          >
+            View Security Dashboard
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Performance & Database Monitor
+          </h3>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Activity className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-purple-900">System Performance & Health</p>
+                <p className="text-sm text-purple-700 mt-1">
+                  Monitor database health, run stress tests for 1000+ concurrent users, check connection pool status, and optimize performance
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/performance')} 
+            className="w-full"
+            variant="default"
+          >
+            View Performance Monitor
+          >
+            View Performance Monitor
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Web Scraper & Bulk Loader
+          </h3>
+          <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Download className="w-5 h-5 text-cyan-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-cyan-900">Load 100+ Real Charter Boats</p>
+                <p className="text-sm text-cyan-700 mt-1">
+                  Automatically scrape and import real charter businesses from Gulf Coast websites with duplicate detection
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/scraper')} 
+            className="w-full"
+            variant="default"
+          >
+            Open Web Scraper Dashboard
+          </Button>
+        </div>
+
+
+        </div>
+
+
+
+
 
       </CardContent>
     </Card>

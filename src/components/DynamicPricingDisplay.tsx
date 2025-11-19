@@ -1,97 +1,94 @@
-import { useEffect, useState } from "react";
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { TrendingUp, Calendar, Users } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Calendar, Users } from 'lucide-react';
 
-interface PricingData {
+interface PricingFactors {
   basePrice: number;
+  demandMultiplier: number;
+  seasonalMultiplier: number;
+  weatherMultiplier: number;
   finalPrice: number;
-  multiplier: number;
-  factors: {
-    season: boolean;
-    weekend: boolean;
-    demand: number;
-  };
+  savings?: number;
 }
 
-interface DynamicPricingDisplayProps {
-  boatId: string;
-  startDate: string;
-  endDate: string;
-}
-
-export default function DynamicPricingDisplay({ boatId, startDate, endDate }: DynamicPricingDisplayProps) {
-  const [pricing, setPricing] = useState<PricingData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function DynamicPricingDisplay({ 
+  basePrice, 
+  date, 
+  partySize 
+}: { 
+  basePrice: number; 
+  date: Date; 
+  partySize: number;
+}) {
+  const [pricing, setPricing] = useState<PricingFactors | null>(null);
 
   useEffect(() => {
-    calculatePricing();
-  }, [boatId, startDate, endDate]);
+    calculateDynamicPrice();
+  }, [basePrice, date, partySize]);
 
-  const calculatePricing = async () => {
-    setLoading(true);
-    try {
-      const { data } = await supabase.functions.invoke("calculate-dynamic-pricing", {
-        body: { boatId, startDate, endDate },
-      });
+  const calculateDynamicPrice = () => {
+    const dayOfWeek = date.getDay();
+    const month = date.getMonth();
+    
+    // Weekend pricing
+    const demandMultiplier = [0, 6].includes(dayOfWeek) ? 1.3 : 1.0;
+    
+    // Peak season (May-August)
+    const seasonalMultiplier = [4, 5, 6, 7].includes(month) ? 1.2 : 0.9;
+    
+    // Weather factor (simplified)
+    const weatherMultiplier = 1.0;
+    
+    const finalPrice = basePrice * demandMultiplier * seasonalMultiplier * weatherMultiplier;
+    const savings = finalPrice < basePrice ? basePrice - finalPrice : undefined;
 
-      if (data) {
-        setPricing(data);
-      }
-    } catch (error) {
-      console.error("Pricing calculation error:", error);
-    } finally {
-      setLoading(false);
-    }
+    setPricing({
+      basePrice,
+      demandMultiplier,
+      seasonalMultiplier,
+      weatherMultiplier,
+      finalPrice,
+      savings
+    });
   };
 
-  if (loading) return <div className="animate-pulse h-32 bg-gray-200 rounded" />;
   if (!pricing) return null;
 
-  const discount = ((pricing.basePrice - pricing.finalPrice) / pricing.basePrice * 100);
-  const isDiscounted = discount > 0;
-
   return (
-    <Card className="p-4">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <p className="text-sm text-gray-600">Price per day</p>
-          <div className="flex items-baseline gap-2">
-            {isDiscounted && (
-              <span className="text-lg line-through text-gray-400">${pricing.basePrice}</span>
-            )}
-            <span className="text-3xl font-bold text-blue-600">${pricing.finalPrice}</span>
-          </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Smart Pricing</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-bold">${pricing.finalPrice.toFixed(2)}</span>
+          {pricing.savings && (
+            <Badge variant="default" className="bg-green-600">
+              <TrendingDown className="h-3 w-3 mr-1" />
+              Save ${pricing.savings.toFixed(2)}
+            </Badge>
+          )}
         </div>
-        {pricing.multiplier > 1 && (
-          <Badge variant="destructive" className="flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            +{((pricing.multiplier - 1) * 100).toFixed(0)}%
-          </Badge>
-        )}
-      </div>
-
-      <div className="space-y-2 text-sm">
-        {pricing.factors.season && (
-          <div className="flex items-center gap-2 text-orange-600">
-            <Calendar className="h-4 w-4" />
-            <span>Peak season pricing</span>
+        <div className="text-sm space-y-1 text-muted-foreground">
+          <div className="flex justify-between">
+            <span>Base Price:</span>
+            <span>${pricing.basePrice.toFixed(2)}</span>
           </div>
-        )}
-        {pricing.factors.weekend && (
-          <div className="flex items-center gap-2 text-purple-600">
-            <Calendar className="h-4 w-4" />
-            <span>Weekend premium</span>
-          </div>
-        )}
-        {pricing.factors.demand > 3 && (
-          <div className="flex items-center gap-2 text-red-600">
-            <Users className="h-4 w-4" />
-            <span>High demand period</span>
-          </div>
-        )}
-      </div>
+          {pricing.demandMultiplier > 1 && (
+            <div className="flex justify-between text-orange-600">
+              <span>Weekend Premium:</span>
+              <span>+{((pricing.demandMultiplier - 1) * 100).toFixed(0)}%</span>
+            </div>
+          )}
+          {pricing.seasonalMultiplier !== 1 && (
+            <div className="flex justify-between">
+              <span>Seasonal Adjustment:</span>
+              <span>{pricing.seasonalMultiplier > 1 ? '+' : ''}{((pricing.seasonalMultiplier - 1) * 100).toFixed(0)}%</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }

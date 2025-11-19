@@ -184,7 +184,7 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
         setSuccess('Login successful!');
         setTimeout(() => onClose(), 1000);
       } else {
-        // Signup flow remains the same
+        // Signup flow with avatar creation
         const { data, error } = await supabase.functions.invoke('user-auth', {
           body: { action: 'signup', email, password, name }
         });
@@ -195,13 +195,39 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
         }
 
         if (data?.success) {
+          // Create default avatar for new user
+          try {
+            await supabase.from('user_avatars').insert({
+              user_id: data.user.id,
+              sex: 'male',
+              skin_color: '#f5d0a9',
+              hair_style: 'short',
+              hair_color: '#4a3728'
+            });
+
+            // Award welcome points
+            await supabase.from('profiles').update({ 
+              points: 15 
+            }).eq('id', data.user.id);
+
+            await supabase.from('avatar_analytics').insert({
+              event_type: 'avatar_created',
+              user_id: data.user.id,
+              metadata: { signup_date: new Date().toISOString() }
+            });
+          } catch (avatarError) {
+            console.error('Avatar creation error:', avatarError);
+            // Don't fail signup if avatar creation fails
+          }
+
           login(data.user);
-          setSuccess('Account created!');
-          setTimeout(() => onClose(), 1000);
+          setSuccess('Account created! Welcome bonus: 15 points');
+          setTimeout(() => onClose(), 1500);
         } else {
           setError(data?.error || 'Authentication failed');
         }
       }
+
     } catch (err: any) {
       setError(err.message || 'An error occurred');
     } finally {

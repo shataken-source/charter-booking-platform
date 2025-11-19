@@ -24,6 +24,12 @@ import { BookingManagementPanel } from './captain/BookingManagementPanel';
 import { EarningsChartPanel } from './captain/EarningsChartPanel';
 import { CustomerMessagingPanel } from './captain/CustomerMessagingPanel';
 import { DocumentUploadPanel } from './captain/DocumentUploadPanel';
+import { EnhancedDocumentUpload } from './captain/EnhancedDocumentUpload';
+import { CaptainComplianceOverview } from './captain/CaptainComplianceOverview';
+import { CaptainExpirationTimeline } from './captain/CaptainExpirationTimeline';
+import CustomEmailPurchase from './CustomEmailPurchase';
+
+
 
 
 
@@ -56,8 +62,11 @@ export default function CaptainDashboard() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
 
   const captainId = 'captain1'; // In production, get from auth context
+
 
   // Mock earnings data for charts
   const earningsData = {
@@ -82,7 +91,26 @@ export default function CaptainDashboard() {
   useEffect(() => {
     loadBookings();
     loadAnalytics();
+    loadDocuments();
   }, [statusFilter, startDate, endDate]);
+
+  const loadDocuments = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('captain_documents')
+        .select('*')
+        .eq('captain_id', user.id)
+        .order('uploaded_at', { ascending: false });
+
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    }
+  };
+
 
   const loadBookings = async () => {
     setLoading(true);
@@ -311,9 +339,38 @@ export default function CaptainDashboard() {
             <CustomerMessagingPanel captainId={captainId} />
           </TabsContent>
 
-          <TabsContent value="documents">
-            <DocumentUploadPanel captainId={captainId} />
+          <TabsContent value="documents" className="space-y-6">
+            <CustomEmailPurchase 
+              userId={captainId}
+              userType="captain"
+              currentPoints={0}
+              onPurchaseSuccess={loadDocuments}
+            />
+            
+            <CaptainComplianceOverview 
+              captainId={captainId} 
+              onUploadClick={(docType) => {
+                setSelectedDocType(docType);
+                // Scroll to upload section
+                setTimeout(() => {
+                  const uploadSection = document.getElementById('document-upload-section');
+                  uploadSection?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CaptainExpirationTimeline documents={documents} />
+            </div>
+
+            <div id="document-upload-section">
+              <h2 className="text-2xl font-bold mb-4">Upload Documents</h2>
+              <EnhancedDocumentUpload captainId={captainId} />
+            </div>
           </TabsContent>
+
+
+
 
           <TabsContent value="fleet">
             <FleetManagement />

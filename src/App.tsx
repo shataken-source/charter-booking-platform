@@ -30,9 +30,21 @@ const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
 const AffiliateAnalytics = lazy(() => import("./pages/AffiliateAnalytics"));
+const AdminMobileDashboard = lazy(() => import("./pages/AdminMobileDashboard"));
 const MobileCaptainDashboard = lazy(() => import("./pages/MobileCaptainDashboard"));
+const MembershipAdminPage = lazy(() => import("./components/admin/MembershipAdmin"));
+const AdminScraperDashboard = lazy(() => import("./pages/AdminScraperDashboard"));
+
+
+
+
 const AdminCaptainReview = lazy(() => import("./pages/AdminCaptainReview"));
+const PromotionsPage = lazy(() => import("./components/PromotionsPage"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+
 
 
 
@@ -56,6 +68,9 @@ const App = () => (
                     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-xl">Loading...</div></div>}>
                       <Routes>
                         <Route path="/" element={<Index />} />
+                        <Route path="/faq" element={<FAQ />} />
+                        <Route path="/about" element={<AboutUs />} />
+                        <Route path="/promotions" element={<PromotionsPage />} />
                         <Route path="/search" element={<SearchResults />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="/marine-gear-shop" element={<MarineGearShop />} />
@@ -67,14 +82,18 @@ const App = () => (
                         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
                         <Route path="/admin/affiliate-analytics" element={<AffiliateAnalytics />} />
                         <Route path="/admin/captain-review" element={<AdminCaptainReview />} />
+                        <Route path="/admin/memberships" element={<MembershipAdminPage />} />
+                        <Route path="/admin/scraper" element={<AdminScraperDashboard />} />
+                        <Route path="/admin/mobile" element={<AdminMobileDashboard />} />
 
 
                         <Route path="/captain/mobile-dashboard" element={<MobileCaptainDashboard />} />
                         <Route path="/captains" element={<CaptainDirectory />} />
                         <Route path="/captain/:id" element={<CaptainProfile />} />
                         <Route path="*" element={<NotFound />} />
-
                       </Routes>
+
+
 
                     </Suspense>
                   </BrowserRouter>

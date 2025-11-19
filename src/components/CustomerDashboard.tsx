@@ -9,11 +9,13 @@ import BookingHistoryCard from './BookingHistoryCard';
 import ProfileSettings from './ProfileSettings';
 import ReviewForm from './ReviewForm';
 import ReferralDashboard from './ReferralDashboard';
+import CustomEmailPurchase from './CustomEmailPurchase';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { SEO } from '@/components/SEO';
+
 
 export default function CustomerDashboard() {
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
@@ -23,7 +25,10 @@ export default function CustomerDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState('');
+  const [userPoints, setUserPoints] = useState(0);
   const { toast } = useToast();
+
 
 
   useEffect(() => {
@@ -39,6 +44,19 @@ export default function CustomerDashboard() {
       }
       
       setUserEmail(user.email || '');
+      setUserId(user.id);
+
+      // Fetch user points
+      const { data: pointsData } = await supabase
+        .from('user_points')
+        .select('total_points')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (pointsData) {
+        setUserPoints(pointsData.total_points || 0);
+      }
+
 
       const { data, error } = await supabase.functions.invoke('booking-manager', {
         body: { action: 'list', userId: user.id }
@@ -151,10 +169,16 @@ export default function CustomerDashboard() {
           <TabsContent value="referrals">
             <ReferralDashboard userEmail={userEmail} />
           </TabsContent>
-
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="space-y-6">
+            <CustomEmailPurchase 
+              userId={userId}
+              userType="customer"
+              currentPoints={userPoints}
+              onPurchaseSuccess={fetchBookings}
+            />
             <ProfileSettings />
           </TabsContent>
+
         </Tabs>
       </div>
 

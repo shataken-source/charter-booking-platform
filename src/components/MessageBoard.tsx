@@ -4,198 +4,69 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/contexts/UserContext';
-import { MessageCircle, Send, Reply } from 'lucide-react';
+import { Send, Reply, Anchor, Waves } from 'lucide-react';
 import { initialTopics } from '@/data/messageBoardTopics';
-
-
-interface Message {
-  id: string;
-  userId: string;
-  userName: string;
-  title?: string;
-  content: string;
-  parentId?: string;
-  createdAt: string;
-  replies?: Message[];
-}
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MessageBoard() {
   const { user } = useUser();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<any[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
 
   useEffect(() => {
-    initializeMessageBoard();
+    const stored = localStorage.getItem('messageBoard');
+    if (!stored) localStorage.setItem('messageBoard', JSON.stringify(initialTopics));
     loadMessages();
   }, []);
-
-  const initializeMessageBoard = () => {
-    const stored = localStorage.getItem('messageBoard');
-    if (!stored) {
-      // Seed with initial topics on first load
-      localStorage.setItem('messageBoard', JSON.stringify(initialTopics));
-    }
-  };
 
   const loadMessages = () => {
     const stored = localStorage.getItem('messageBoard');
     if (stored) {
-      const allMessages = JSON.parse(stored);
-      const threaded = buildThreads(allMessages);
-      setMessages(threaded);
+      const all = JSON.parse(stored);
+      const threads = all.filter((m: any) => !m.parentId);
+      threads.forEach((t: any) => t.replies = all.filter((m: any) => m.parentId === t.id));
+      setMessages(threads.sort((a: any, b: any) => b.timestamp - a.timestamp));
     }
   };
 
-
-  const buildThreads = (allMessages: Message[]) => {
-    const threads = allMessages.filter(m => !m.parentId);
-    threads.forEach(thread => {
-      thread.replies = allMessages.filter(m => m.parentId === thread.id);
-    });
-    return threads.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  };
-
-  const postMessage = () => {
-    if (!user) {
-      alert('Please login to post');
-      return;
-    }
+  const postMessage = async () => {
+    if (!user) return toast({ title: 'Please login', variant: 'destructive' });
     if (!newTitle.trim() || !newContent.trim()) return;
-
-    const stored = localStorage.getItem('messageBoard');
-    const allMessages = stored ? JSON.parse(stored) : [];
-    
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      userId: user.id,
-      userName: user.name,
-      title: newTitle,
-      content: newContent,
-      createdAt: new Date().toISOString()
-    };
-
-    allMessages.push(newMsg);
-    localStorage.setItem('messageBoard', JSON.stringify(allMessages));
-    
-    setNewTitle('');
-    setNewContent('');
-    loadMessages();
+    const all = JSON.parse(localStorage.getItem('messageBoard') || '[]');
+    all.push({ id: Date.now().toString(), title: newTitle, content: newContent, author: user.name || user.email, timestamp: Date.now() });
+    localStorage.setItem('messageBoard', JSON.stringify(all));
+    await supabase.functions.invoke('points-rewards-system', { body: { action: 'award_points', userId: user.id, actionType: 'message_post' }});
+    toast({ title: '🌊 +10 points!' });
+    setNewTitle(''); setNewContent(''); loadMessages();
   };
 
   const postReply = (parentId: string) => {
-    if (!user) {
-      alert('Please login to reply');
-      return;
-    }
+    if (!user) return toast({ title: 'Please login', variant: 'destructive' });
     if (!replyContent.trim()) return;
-
-    const stored = localStorage.getItem('messageBoard');
-    const allMessages = stored ? JSON.parse(stored) : [];
-    
-    const reply: Message = {
-      id: Date.now().toString(),
-      userId: user.id,
-      userName: user.name,
-      content: replyContent,
-      parentId,
-      createdAt: new Date().toISOString()
-    };
-
-    allMessages.push(reply);
-    localStorage.setItem('messageBoard', JSON.stringify(allMessages));
-    
-    setReplyTo(null);
-    setReplyContent('');
-    loadMessages();
+    const all = JSON.parse(localStorage.getItem('messageBoard') || '[]');
+    all.push({ id: Date.now().toString(), content: replyContent, author: user.name || user.email, timestamp: Date.now(), parentId });
+    localStorage.setItem('messageBoard', JSON.stringify(all));
+    setReplyTo(null); setReplyContent(''); loadMessages();
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 bg-gradient-to-b from-cyan-50 to-blue-50 min-h-screen">
       <div className="flex items-center gap-3 mb-8">
-        <MessageCircle className="w-8 h-8 text-blue-600" />
-        <h1 className="text-3xl font-bold">Community Message Board</h1>
+        <Anchor className="w-8 h-8 text-blue-600" />
+        <h1 className="text-3xl font-bold text-blue-900">Gulf Coast Community</h1>
+        <Waves className="w-8 h-8 text-cyan-500" />
       </div>
-
-      <Card className="p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Start a New Thread</h2>
-        <Input
-          placeholder="Thread Title"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          className="mb-3"
-        />
-        <Textarea
-          placeholder="What's on your mind?"
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          rows={4}
-          className="mb-3"
-        />
-        <Button onClick={postMessage} disabled={!user}>
-          <Send className="w-4 h-4 mr-2" />
-          Post Thread
-        </Button>
-        {!user && <p className="text-sm text-gray-500 mt-2">Login to post</p>}
+      <Card className="p-6 mb-8 border-2 border-cyan-200">
+        <Input placeholder="Thread Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mb-3" />
+        <Textarea placeholder="Share with the community..." value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={4} className="mb-3" />
+        <Button onClick={postMessage} disabled={!user} className="bg-gradient-to-r from-blue-500 to-cyan-500"><Send className="w-4 h-4 mr-2" />Post</Button>
       </Card>
-
-      <div className="space-y-6">
-        {messages.map(msg => (
-          <Card key={msg.id} className="p-6">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="text-xl font-semibold">{msg.title}</h3>
-                <p className="text-sm text-gray-500">
-                  by {msg.userName} • {new Date(msg.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <p className="text-gray-700 mb-4">{msg.content}</p>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setReplyTo(msg.id)}
-            >
-              <Reply className="w-4 h-4 mr-2" />
-              Reply
-            </Button>
-
-            {replyTo === msg.id && (
-              <div className="mt-4 pl-4 border-l-2">
-                <Textarea
-                  placeholder="Write your reply..."
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  rows={3}
-                  className="mb-2"
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => postReply(msg.id)}>Post Reply</Button>
-                  <Button size="sm" variant="outline" onClick={() => setReplyTo(null)}>Cancel</Button>
-                </div>
-              </div>
-            )}
-
-            {msg.replies && msg.replies.length > 0 && (
-              <div className="mt-4 pl-6 border-l-2 space-y-3">
-                {msg.replies.map(reply => (
-                  <div key={reply.id} className="bg-gray-50 p-4 rounded">
-                    <p className="text-sm text-gray-500 mb-2">
-                      {reply.userName} • {new Date(reply.createdAt).toLocaleDateString()}
-                    </p>
-                    <p className="text-gray-700">{reply.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
+      <div className="space-y-6">{messages.map(msg => (<Card key={msg.id} className="p-6 border-cyan-100"><h3 className="text-xl font-bold text-blue-900">{msg.title}</h3><p className="text-sm text-gray-500 mb-3">by {msg.author}</p><p className="mb-4">{msg.content}</p><Button variant="outline" size="sm" onClick={() => setReplyTo(msg.id)}><Reply className="w-4 h-4 mr-2" />Reply</Button>{replyTo === msg.id && (<div className="mt-4 pl-4 border-l-2 border-cyan-300"><Textarea placeholder="Reply..." value={replyContent} onChange={(e) => setReplyContent(e.target.value)} rows={3} className="mb-2" /><Button size="sm" onClick={() => postReply(msg.id)}>Post</Button></div>)}{msg.replies?.map((r: any) => (<div key={r.id} className="mt-3 pl-6 bg-cyan-50 p-4 rounded"><p className="text-sm text-gray-500">{r.author}</p><p>{r.content}</p></div>))}</Card>))}</div>
     </div>
   );
 }

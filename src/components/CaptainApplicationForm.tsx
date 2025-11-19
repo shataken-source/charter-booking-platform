@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
 export default function CaptainApplicationForm() {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -71,10 +71,7 @@ export default function CaptainApplicationForm() {
 
       if (error) throw error;
 
-      toast({
-        title: 'Application Submitted',
-        description: 'Your captain application has been submitted for review.'
-      });
+      toast.success('Your captain application has been submitted for review.');
 
       // Reset form
       setFormData({
@@ -83,11 +80,7 @@ export default function CaptainApplicationForm() {
       });
       setFiles({ uscgLicense: null, insurance: null, certifications: null });
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast.error(error.message || 'Failed to submit application');
     } finally {
       setLoading(false);
     }

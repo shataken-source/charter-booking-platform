@@ -5,7 +5,7 @@ import MarineProductCard from '@/components/MarineProductCard';
 import MarineGearFilters from '@/components/MarineGearFilters';
 import ProductComparisonModal from '@/components/ProductComparisonModal';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, GitCompare } from 'lucide-react';
+import { ShoppingBag, GitCompare, Info } from 'lucide-react';
 
 export default function MarineGearShop() {
   const [filters, setFilters] = useState({
@@ -81,16 +81,26 @@ export default function MarineGearShop() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-cyan-50 to-teal-50">
+      <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white py-16">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-3 mb-4">
             <ShoppingBag className="w-12 h-12" />
             <h1 className="text-4xl font-bold">Marine Gear Shop</h1>
           </div>
-          <p className="text-xl">Premium marine equipment from trusted retailers</p>
+          <p className="text-xl mb-4">Premium marine equipment from Amazon, Walmart & BoatUS</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-2xl">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 mt-0.5 flex-shrink-0" />
+              <p className="text-sm">
+                <strong>Transparency Notice:</strong> Gulf Coast Charters earns a small commission when you purchase through our affiliate links. 
+                This costs you nothing extra - you pay the same price, and it helps us keep this platform free for everyone!
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
