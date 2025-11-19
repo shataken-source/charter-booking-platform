@@ -110,18 +110,36 @@ self.addEventListener('push', (event) => {
       tag: 'booking-update',
       url: '/customer/dashboard'
     },
+    'message': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'new-message',
+      url: '/messages'
+    },
+    'review': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'review',
+      url: '/notifications'
+    },
+    'payment': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'payment',
+      url: '/customer/dashboard'
+    },
+    'system': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'system-alert',
+      url: '/notifications'
+    },
     'weather': {
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       tag: 'weather-alert',
       url: '/captain/mobile-dashboard?tab=weather',
       requireInteraction: data.severity === 'Extreme' || data.severity === 'Severe'
-    },
-    'message': {
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: 'new-message',
-      url: '/messages'
     },
     'reminder': {
       icon: '/icon-192.png',
@@ -131,8 +149,8 @@ self.addEventListener('push', (event) => {
     }
   };
 
-  const type = data.type || 'booking';
-  const config = notificationTypes[type] || notificationTypes['booking'];
+  const type = data.type || 'system';
+  const config = notificationTypes[type] || notificationTypes['system'];
   
   const options = {
     body: data.body || 'You have a new notification',
@@ -143,6 +161,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: config.requireInteraction || false,
     data: {
       url: data.url || config.url,
+      notificationId: data.notificationId,
       ...data
     },
     actions: data.actions || []
@@ -152,6 +171,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'Gulf Coast Charters', options)
   );
 });
+
+
 
 
 // Notification Click Handler

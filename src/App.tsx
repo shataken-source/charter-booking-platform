@@ -55,6 +55,8 @@ const AboutUs = lazy(() => import("./pages/AboutUs"));
 const DeveloperOnboarding = lazy(() => import("./pages/DeveloperOnboarding"));
 const ComponentShowcase = lazy(() => import("./pages/ComponentShowcase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const NotificationHistory = lazy(() => import("./pages/NotificationHistory"));
+
 
 
 
@@ -106,6 +108,8 @@ const App = () => (
                         <Route path="/affiliate-program" element={<AffiliateProgram />} />
                         <Route path="/developer-onboarding" element={<DeveloperOnboarding />} />
                         <Route path="/components-showcase" element={<ComponentShowcase />} />
+                        <Route path="/notifications" element={<NotificationHistory />} />
+
 
 
 

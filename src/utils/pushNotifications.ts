@@ -1,76 +1,107 @@
 import { supabase } from '@/lib/supabase';
 
-export async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    console.log('Browser does not support notifications');
-    return false;
-  }
+// VAPID public key - in production, generate your own using web-push library
+const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBroYeXYGPntQYTYCkNE';
 
-  const permission = await Notification.requestPermission();
-  return permission === 'granted';
-}
-
-export async function subscribeToPushNotifications() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Push notifications not supported');
-    return null;
-  }
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        'BEl62iUYgUivxIkv69yViEuiBIa-Ib27SzV7kGtyD8qU7MjcL4C2qpIupk7J4Z1wAxIDRyY0kN26N3V3oVG8qNI'
-      )
-    });
-
-    // Save subscription to database
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        endpoint: subscription.endpoint,
-        p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-        auth: arrayBufferToBase64(subscription.getKey('auth'))
-      });
-    }
-
-    return subscription;
-  } catch (error) {
-    console.error('Failed to subscribe:', error);
-    return null;
-  }
-}
-
-export function showBrowserNotification(title: string, options?: NotificationOptions) {
-  if (Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      ...options
-    });
-  }
-}
-
-function urlBase64ToUint8Array(base64String: string) {
+export async function urlBase64ToUint8Array(base64String: string): Promise<Uint8Array> {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
+
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
 }
 
-function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
-  if (!buffer) return '';
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+export async function isPushSupported(): Promise<boolean> {
+  return 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
+export async function getPushPermission(): Promise<NotificationPermission> {
+  if (!('Notification' in window)) {
+    return 'denied';
   }
-  return window.btoa(binary);
+  return Notification.permission;
+}
+
+export async function requestPushPermission(): Promise<NotificationPermission> {
+  if (!('Notification' in window)) {
+    throw new Error('Push notifications not supported');
+  }
+  return await Notification.requestPermission();
+}
+
+export async function subscribeToPush(userId: string): Promise<PushSubscription | null> {
+  try {
+    const permission = await requestPushPermission();
+    if (permission !== 'granted') {
+      throw new Error('Push notification permission denied');
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const applicationServerKey = await urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey
+    });
+
+    // Store subscription in database
+    const { data, error } = await supabase.functions.invoke('push-notification-service', {
+      body: {
+        action: 'subscribe',
+        userId,
+        subscription: subscription.toJSON()
+      }
+    });
+
+    if (error) throw error;
+
+    return subscription;
+  } catch (error) {
+    console.error('Push subscription failed:', error);
+    return null;
+  }
+}
+
+export async function unsubscribeFromPush(userId: string): Promise<boolean> {
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      return true;
+    }
+
+    // Remove from database
+    await supabase.functions.invoke('push-notification-service', {
+      body: {
+        action: 'unsubscribe',
+        userId,
+        subscription: subscription.toJSON()
+      }
+    });
+
+    // Unsubscribe from browser
+    await subscription.unsubscribe();
+    return true;
+  } catch (error) {
+    console.error('Push unsubscribe failed:', error);
+    return false;
+  }
+}
+
+export async function getCurrentSubscription(): Promise<PushSubscription | null> {
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    return await registration.pushManager.getSubscription();
+  } catch (error) {
+    console.error('Get subscription failed:', error);
+    return null;
+  }
 }

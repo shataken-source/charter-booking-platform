@@ -1,133 +1,152 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { Bell, BellOff, Settings, Check, AlertCircle } from 'lucide-react';
-import { subscribeToPushNotifications } from '@/utils/pushNotifications';
+import { Bell, BellOff, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/UserContext';
+import {
+  isPushSupported,
+  getPushPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription
+} from '@/utils/pushNotifications';
 
-export default function PushNotificationManager() {
+export function PushNotificationManager() {
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
-    if ('Notification' in window) {
-      setPermission(Notification.permission);
-      checkSubscription();
-    }
+    checkPushStatus();
   }, []);
 
-  const checkSubscription = async () => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
-    }
-  };
+  async function checkPushStatus() {
+    const supported = await isPushSupported();
+    setIsSupported(supported);
 
-  const handleEnableNotifications = async () => {
-    setLoading(true);
-    try {
-      const perm = await Notification.requestPermission();
+    if (supported) {
+      const perm = await getPushPermission();
       setPermission(perm);
 
-      if (perm === 'granted') {
-        const subscription = await subscribeToPushNotifications();
-        setIsSubscribed(!!subscription);
+      const subscription = await getCurrentSubscription();
+      setIsSubscribed(!!subscription);
+    }
+  }
+
+  async function handleSubscribe() {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const subscription = await subscribeToPush(user.id);
+      if (subscription) {
+        setIsSubscribed(true);
+        setPermission('granted');
         toast({
-          title: 'Notifications Enabled!',
-          description: 'You will receive booking updates and weather alerts',
-        });
-      } else if (perm === 'denied') {
-        toast({
-          title: 'Notifications Blocked',
-          description: 'Please enable notifications in your device settings',
-          variant: 'destructive',
+          title: 'Push notifications enabled',
+          description: 'You will receive push notifications for important updates.'
         });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to enable notifications',
-        variant: 'destructive',
+        title: 'Subscription failed',
+        description: error instanceof Error ? error.message : 'Could not enable push notifications',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const openSettings = () => {
-    toast({
-      title: 'Open Settings',
-      description: 'Go to Settings > Notifications > Gulf Coast Charters to enable',
-    });
-  };
+  async function handleUnsubscribe() {
+    if (!user) return;
 
-  if (!('Notification' in window)) return null;
+    setLoading(true);
+    try {
+      await unsubscribeFromPush(user.id);
+      setIsSubscribed(false);
+      toast({
+        title: 'Push notifications disabled',
+        description: 'You will no longer receive push notifications.'
+      });
+    } catch (error) {
+      toast({
+        title: 'Unsubscribe failed',
+        description: 'Could not disable push notifications',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!isSupported) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Push notifications are not supported in your browser.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-full ${
-            permission === 'granted' ? 'bg-green-100' : 'bg-gray-100'
-          }`}>
-            {permission === 'granted' ? (
-              <Bell className="w-5 h-5 text-green-600" />
-            ) : (
-              <BellOff className="w-5 h-5 text-gray-600" />
-            )}
-          </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {isSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+          Browser Push Notifications
+        </CardTitle>
+        <CardDescription>
+          Receive instant notifications even when the site is closed
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {permission === 'denied' && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Push notifications are blocked. Please enable them in your browser settings.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold">Push Notifications</h3>
-            <p className="text-sm text-gray-600">
-              {permission === 'granted' ? 'Enabled' : 'Disabled'}
+            <p className="font-medium">
+              Status: {isSubscribed ? 'Enabled' : 'Disabled'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isSubscribed 
+                ? 'You are receiving push notifications' 
+                : 'Enable to receive instant alerts'}
             </p>
           </div>
+          
+          {isSubscribed ? (
+            <Button
+              variant="outline"
+              onClick={handleUnsubscribe}
+              disabled={loading}
+            >
+              Disable
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubscribe}
+              disabled={loading || permission === 'denied'}
+            >
+              Enable
+            </Button>
+          )}
         </div>
-        {permission === 'granted' && isSubscribed && (
-          <Check className="w-5 h-5 text-green-600" />
-        )}
-      </div>
-
-      {permission === 'default' && (
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">
-            Enable notifications to receive booking updates, weather alerts, and important messages
-          </p>
-          <Button 
-            onClick={handleEnableNotifications} 
-            disabled={loading}
-            className="w-full"
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            Enable Notifications
-          </Button>
-        </div>
-      )}
-
-      {permission === 'denied' && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-800">
-              <p className="font-medium mb-1">Notifications are blocked</p>
-              <p>To enable, go to your device settings and allow notifications for this app</p>
-            </div>
-          </div>
-          <Button onClick={openSettings} variant="outline" className="w-full">
-            <Settings className="w-4 h-4 mr-2" />
-            Open Settings Instructions
-          </Button>
-        </div>
-      )}
-
-      {permission === 'granted' && !isSubscribed && (
-        <Button onClick={handleEnableNotifications} disabled={loading} className="w-full">
-          Subscribe to Updates
-        </Button>
-      )}
+      </CardContent>
     </Card>
   );
 }

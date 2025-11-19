@@ -3,6 +3,8 @@ import { Button } from './ui/button';
 import { Menu, X, User, Ship } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import UserAuth from './UserAuth';
+import { NotificationBell } from './NotificationBell';
+
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,11 +41,13 @@ export default function Navigation() {
             <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <>
+                  <NotificationBell />
                   <Button variant="outline" onClick={() => window.location.href = '/customer-dashboard'}>
                     <User className="w-4 h-4 mr-2" />
                     Dashboard
                   </Button>
                   <Button variant="ghost" onClick={logout}>Logout</Button>
+
                 </>
               ) : (
                 <>
