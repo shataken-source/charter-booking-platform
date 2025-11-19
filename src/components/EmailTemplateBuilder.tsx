@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { sanitizeHtml } from '@/lib/security';
 
-export default function EmailTemplateBuilder() {
-
+interface EmailBlock {
+  id: string;
+  type: 'header' | 'text' | 'image' | 'button' | 'divider';
   content: string;
   styles?: Record<string, string>;
 }
@@ -105,8 +104,7 @@ const EmailTemplateBuilder: React.FC<EmailTemplateBuilderProps> = ({ onSave }) =
               <Button onClick={handleSave} className="w-full">Save Template</Button>
             </TabsContent>
             <TabsContent value="preview">
-              <div className="border rounded-lg p-4 bg-gray-50" dangerouslySetInnerHTML={{ __html: sanitizeHtml(generateHTML()) }} />
-
+              <div className="border rounded-lg p-4 bg-gray-50" dangerouslySetInnerHTML={{ __html: generateHTML() }} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -3,8 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, List, User, Gift, Trophy } from 'lucide-react';
 import LoyaltyRewardsDashboard from './LoyaltyRewardsDashboard';
-import AchievementBadges from './AchievementBadges';
-import TopReviewersLeaderboard from './TopReviewersLeaderboard';
+
 import BookingHistoryCard from './BookingHistoryCard';
 import ProfileSettings from './ProfileSettings';
 import ReviewForm from './ReviewForm';
@@ -84,7 +83,7 @@ export default function CustomerDashboard() {
   };
 
   const handleDownloadReceipt = (bookingId: string) => {
-    // Download receipt functionality
+    console.log('Downloading receipt for:', bookingId);
   };
 
   return (
@@ -107,14 +106,9 @@ export default function CustomerDashboard() {
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rewards" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <LoyaltyRewardsDashboard userId={userEmail} />
-              <TopReviewersLeaderboard />
-            </div>
-            <AchievementBadges userId={userEmail} />
+          <TabsContent value="rewards">
+            <LoyaltyRewardsDashboard userId={userEmail} />
           </TabsContent>
-
 
 
           <TabsContent value="bookings">

@@ -9,11 +9,11 @@ const Index: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Gulf Charter Finder",
-    "url": "https://gulfcoastcharters.com",
+    "url": "https://gulfcharterfinder.com",
     "description": "Find and book charter boats across the Gulf Coast",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://gulfcoastcharters.com/search?q={search_term_string}",
+      "target": "https://gulfcharterfinder.com/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

@@ -9,18 +9,19 @@ export function initPerformanceMonitoring() {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        // LCP tracked
+        console.log('[Performance] LCP:', Math.round(lastEntry.startTime), 'ms');
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
+      // Monitor First Input Delay
       const fidObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry: any) => {
-          // FID tracked
+          console.log('[Performance] FID:', Math.round(entry.processingStart - entry.startTime), 'ms');
         });
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
     } catch (e) {
-      // Performance monitoring not supported
+      console.log('Performance monitoring not supported');
     }
   }
 }

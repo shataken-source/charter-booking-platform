@@ -34,9 +34,6 @@ const MarineGearShop = lazy(() => import("./pages/MarineGearShop"));
 const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
 const AffiliateAnalytics = lazy(() => import("./pages/AffiliateAnalytics"));
 const SiteSettingsManager = lazy(() => import("./components/admin/SiteSettingsManager"));
-const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
-const LocationLanding = lazy(() => import("./pages/LocationLanding"));
-
 
 
 
@@ -54,49 +51,53 @@ const LocationLanding = lazy(() => import("./pages/LocationLanding"));
 const App = () => (
   <ThemeProvider defaultTheme="light">
     <I18nProvider>
-      <SiteSettingsProvider>
-        <UserProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PerformanceMonitor />
-            <BrowserRouter>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <Routes>
-                  <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-                  <Route path="/community" element={<ErrorBoundary><Community /></ErrorBoundary>} />
-                  <Route path="/captain-login" element={<ErrorBoundary><CaptainLogin /></ErrorBoundary>} />
-                  <Route path="/apply-captain" element={<ErrorBoundary><ApplyCaptain /></ErrorBoundary>} />
-                  <Route path="/captains" element={<ErrorBoundary><CaptainDirectory /></ErrorBoundary>} />
-                  <Route path="/captain/:id" element={<ErrorBoundary><CaptainProfile /></ErrorBoundary>} />
-                  <Route path="/captain-dashboard" element={<ErrorBoundary><CaptainDashboard /></ErrorBoundary>} />
-                  <Route path="/my-bookings" element={<ErrorBoundary><CustomerDashboard /></ErrorBoundary>} />
-                  <Route path="/payment-success" element={<ErrorBoundary><PaymentSuccess /></ErrorBoundary>} />
-                  <Route path="/admin/oauth-setup" element={<ErrorBoundary><OAuthSetupWizard /></ErrorBoundary>} />
-                  <Route path="/admin/email-campaigns" element={<ErrorBoundary><EmailCampaignManager /></ErrorBoundary>} />
-                  <Route path="/admin/mailing-list" element={<ErrorBoundary><MailingListManager /></ErrorBoundary>} />
-                  <Route path="/admin/sms-campaigns" element={<ErrorBoundary><SMSCampaignManager /></ErrorBoundary>} />
-                  <Route path="/feature-flags" element={<ErrorBoundary><FeatureFlagAdmin /></ErrorBoundary>} />
-                  <Route path="/admin/user-management" element={<ErrorBoundary><UserManagementPanel /></ErrorBoundary>} />
-                  <Route path="/admin/analytics" element={<ErrorBoundary><UserActivityAnalytics /></ErrorBoundary>} />
-                  <Route path="/marine-gear" element={<ErrorBoundary><MarineGearShop /></ErrorBoundary>} />
-                  <Route path="/admin/marine-products" element={<ErrorBoundary><MarineProductsAdmin /></ErrorBoundary>} />
-                  <Route path="/admin/affiliate-analytics" element={<ErrorBoundary><AffiliateAnalytics /></ErrorBoundary>} />
-                  <Route path="/admin/photo-moderation" element={<ErrorBoundary><PhotoModerationPage /></ErrorBoundary>} />
-                  <Route path="/admin/site-settings" element={<ErrorBoundary><SiteSettingsManager /></ErrorBoundary>} />
-                  <Route path="/charters/:location" element={<ErrorBoundary><LocationLanding /></ErrorBoundary>} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+      <UserProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <PerformanceMonitor />
+          <BrowserRouter>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <Routes>
+                <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+                <Route path="/community" element={<ErrorBoundary><Community /></ErrorBoundary>} />
+                <Route path="/captain-login" element={<ErrorBoundary><CaptainLogin /></ErrorBoundary>} />
+                <Route path="/apply-captain" element={<ErrorBoundary><ApplyCaptain /></ErrorBoundary>} />
+                <Route path="/captains" element={<ErrorBoundary><CaptainDirectory /></ErrorBoundary>} />
+                <Route path="/captain/:id" element={<ErrorBoundary><CaptainProfile /></ErrorBoundary>} />
+                <Route path="/captain-dashboard" element={<ErrorBoundary><CaptainDashboard /></ErrorBoundary>} />
+                <Route path="/my-bookings" element={<ErrorBoundary><CustomerDashboard /></ErrorBoundary>} />
+                <Route path="/payment-success" element={<ErrorBoundary><PaymentSuccess /></ErrorBoundary>} />
+                <Route path="/admin/oauth-setup" element={<ErrorBoundary><OAuthSetupWizard /></ErrorBoundary>} />
+                <Route path="/admin/email-campaigns" element={<ErrorBoundary><EmailCampaignManager /></ErrorBoundary>} />
+                <Route path="/admin/mailing-list" element={<ErrorBoundary><MailingListManager /></ErrorBoundary>} />
+                <Route path="/admin/sms-campaigns" element={<ErrorBoundary><SMSCampaignManager /></ErrorBoundary>} />
+                <Route path="/feature-flags" element={<ErrorBoundary><FeatureFlagAdmin /></ErrorBoundary>} />
+                <Route path="/admin/user-management" element={<ErrorBoundary><UserManagementPanel /></ErrorBoundary>} />
+                <Route path="/admin/analytics" element={<ErrorBoundary><UserActivityAnalytics /></ErrorBoundary>} />
+                <Route path="/marine-gear" element={<ErrorBoundary><MarineGearShop /></ErrorBoundary>} />
+                <Route path="/admin/marine-products" element={<ErrorBoundary><MarineProductsAdmin /></ErrorBoundary>} />
+                <Route path="/admin/affiliate-analytics" element={<ErrorBoundary><AffiliateAnalytics /></ErrorBoundary>} />
 
-            </BrowserRouter>
-          </TooltipProvider>
-        </UserProvider>
-      </SiteSettingsProvider>
+
+
+
+
+
+
+
+
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+
+
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </UserProvider>
     </I18nProvider>
   </ThemeProvider>
 );
-
 
 
 

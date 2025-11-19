@@ -11,7 +11,6 @@ interface SiteSettings {
   instagram: string;
   linkedin: string;
   youtube: string;
-  firebaseServerKey: string;
 }
 
 const defaultSettings: SiteSettings = {
@@ -25,9 +24,7 @@ const defaultSettings: SiteSettings = {
   instagram: 'https://instagram.com/gulfcoastcharters',
   linkedin: 'https://linkedin.com/company/gulfcoastcharters',
   youtube: 'https://youtube.com/@gulfcoastcharters',
-  firebaseServerKey: '',
 };
-
 
 const SiteSettingsContext = createContext<{
   settings: SiteSettings;

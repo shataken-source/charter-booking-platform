@@ -3,10 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Fingerprint } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import TwoFactorVerification from './TwoFactorVerification';
-import PasskeyAuthentication from './PasskeyAuthentication';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { ResetPasswordForm } from './ResetPasswordForm';
 
@@ -30,12 +29,7 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetCode, setResetCode] = useState('');
-  const [show2FA, setShow2FA] = useState(false);
-  const [showPasskeyAuth, setShowPasskeyAuth] = useState(false);
-  const [pendingUser, setPendingUser] = useState<any>(null);
   const { login } = useUser();
-
-
 
 
   // Get message from sessionStorage if not provided as prop
@@ -112,26 +106,25 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
     setError('');
     
     try {
-      // Initiating OAuth login
+      console.log(`Initiating ${provider} OAuth login...`);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
+        provider,
         options: {
           redirectTo: `${window.location.origin}/`,
-          queryParams: {
+          queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
-          }
+          } : undefined
         }
       });
 
       if (error) {
+        console.error('OAuth error:', error);
         throw error;
       }
       
-      // OAuth redirect initiated successfully
-      // Don't set loading to false here - user is being redirected
-      
+      console.log('OAuth redirect initiated successfully');
       // Don't set loading to false here - user is being redirected
       
     } catch (err: any) {
@@ -149,58 +142,21 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
     setSuccess('');
 
     try {
-      if (isLogin) {
-        // For login, first authenticate with credentials
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { data, error } = await supabase.functions.invoke('user-auth', {
+        body: { action: isLogin ? 'login' : 'signup', email, password, name }
+      });
 
-        if (authError) throw authError;
+      if (error) {
+        setError(error.message || 'Unable to connect');
+        return;
+      }
 
-        // Check if user has 2FA enabled
-        const { data: twoFAData } = await supabase.functions.invoke('two-factor-auth', {
-          body: { action: 'status' },
-          headers: { Authorization: `Bearer ${authData.session?.access_token}` }
-        });
-
-        if (twoFAData?.enabled) {
-          // 2FA is enabled, show verification modal
-          setPendingUser(authData.user);
-          setShow2FA(true);
-          setLoading(false);
-          return;
-        }
-
-        // No 2FA, complete login
-        const userData = {
-          id: authData.user.id,
-          email: authData.user.email || '',
-          name: authData.user.user_metadata?.full_name || authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || '',
-          profilePicture: authData.user.user_metadata?.avatar_url,
-          provider: 'email'
-        };
-        login(userData);
-        setSuccess('Login successful!');
+      if (data?.success) {
+        login(data.user);
+        setSuccess(isLogin ? 'Login successful!' : 'Account created!');
         setTimeout(() => onClose(), 1000);
       } else {
-        // Signup flow remains the same
-        const { data, error } = await supabase.functions.invoke('user-auth', {
-          body: { action: 'signup', email, password, name }
-        });
-
-        if (error) {
-          setError(error.message || 'Unable to connect');
-          return;
-        }
-
-        if (data?.success) {
-          login(data.user);
-          setSuccess('Account created!');
-          setTimeout(() => onClose(), 1000);
-        } else {
-          setError(data?.error || 'Authentication failed');
-        }
+        setError(data?.error || 'Authentication failed');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
@@ -209,90 +165,8 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
     }
   };
 
-  const handle2FAVerified = () => {
-    if (pendingUser) {
-      const userData = {
-        id: pendingUser.id,
-        email: pendingUser.email || '',
-        name: pendingUser.user_metadata?.full_name || pendingUser.user_metadata?.name || pendingUser.email?.split('@')[0] || '',
-        profilePicture: pendingUser.user_metadata?.avatar_url,
-        provider: 'email'
-      };
-      login(userData);
-      setSuccess('Login successful!');
-      setShow2FA(false);
-      setTimeout(() => onClose(), 1000);
-    }
-  };
-
-  const handlePasskeySuccess = async (userId: string) => {
-    try {
-      // Get user data from Supabase
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const userData = {
-          id: user.id,
-          email: user.email || '',
-          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
-          profilePicture: user.user_metadata?.avatar_url,
-          provider: 'passkey'
-        };
-        login(userData);
-        setSuccess('Login successful!');
-        setTimeout(() => onClose(), 1000);
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to complete passkey login');
-    }
-  };
-
-
-  // If showing 2FA verification, render that instead
-  if (show2FA) {
-    return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <TwoFactorVerification
-          onVerified={handle2FAVerified}
-          onCancel={() => {
-            setShow2FA(false);
-            setPendingUser(null);
-            supabase.auth.signOut();
-          }}
-        />
-      </div>
-    );
-  }
-
-  // If showing passkey authentication, render that instead
-  if (showPasskeyAuth) {
-    return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white relative">
-            <button onClick={onClose} className="absolute top-4 right-4 hover:bg-white/20 rounded-full p-1 transition">
-              <X className="w-6 h-6" />
-            </button>
-            <h2 className="text-3xl font-bold mb-2">Biometric Login</h2>
-            <p className="text-purple-100">
-              Use your fingerprint, Face ID, or security key
-            </p>
-          </div>
-          <div className="p-8">
-            <PasskeyAuthentication
-              onSuccess={handlePasskeySuccess}
-              onCancel={() => setShowPasskeyAuth(false)}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-
   return (
     <>
-
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
         <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 text-white relative">
@@ -306,27 +180,6 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
           </div>
 
           <div className="p-8">
-            {isLogin && (
-              <>
-                <Button 
-                  onClick={() => setShowPasskeyAuth(true)} 
-                  variant="outline" 
-                  className="w-full h-14 border-2 hover:bg-purple-50 hover:border-purple-300 mb-6 transition-all"
-                >
-                  <Fingerprint className="w-6 h-6 mr-3 text-purple-600" />
-                  <div className="text-left">
-                    <div className="font-semibold text-base">Sign in with Biometrics</div>
-                    <div className="text-xs text-gray-500">Use fingerprint, Face ID, or security key</div>
-                  </div>
-                </Button>
-
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300"></div></div>
-                  <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">Or</span></div>
-                </div>
-              </>
-            )}
-
             <div className="space-y-3 mb-6">
               <Button onClick={() => handleOAuthLogin('google')} disabled={loading} variant="outline" className="w-full h-12 border-2 hover:bg-gray-50">
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -381,7 +234,6 @@ export default function UserAuth({ onClose, message }: UserAuthProps) {
                 {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
               </Button>
             </form>
-
             <p className="mt-6 text-center text-sm text-gray-600">
               {isLogin ? "Don't have an account? " : 'Already have an account? '}
               <button onClick={() => { setIsLogin(!isLogin); setError(''); setSuccess(''); }} className="text-blue-600 hover:underline font-semibold">

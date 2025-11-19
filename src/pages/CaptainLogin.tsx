@@ -7,7 +7,7 @@ export default function CaptainLoginPage() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = (email: string) => {
-    // Captain logged in successfully
+    console.log('Captain logged in:', email);
     navigate('/captain-dashboard');
   };
 

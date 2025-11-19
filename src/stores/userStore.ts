@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -14,46 +15,20 @@ interface UserState {
   logout: () => void;
 }
 
-// Simple state management without zustand
-let listeners: Array<() => void> = [];
-let state: Omit<UserState, 'login' | 'logout'> = {
-  user: null,
-  isAuthenticated: false,
-};
-
-// Load from localStorage on init
-try {
-  const stored = localStorage.getItem('user-storage');
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    state = parsed.state || state;
-  }
-} catch (e) {}
-
-const setState = (newState: Partial<typeof state>) => {
-  state = { ...state, ...newState };
-  try {
-    localStorage.setItem('user-storage', JSON.stringify({ state }));
-  } catch (e) {}
-  listeners.forEach(listener => listener());
-};
-
-export const useUserStore = <T>(selector: (state: UserState) => T): T => {
-  const [, forceUpdate] = useState({});
-  
-  useEffect(() => {
-    const listener = () => forceUpdate({});
-    listeners.push(listener);
-    return () => {
-      listeners = listeners.filter(l => l !== listener);
-    };
-  }, []);
-  
-  const fullState: UserState = {
-    ...state,
-    login: (user: User) => setState({ user, isAuthenticated: true }),
-    logout: () => setState({ user: null, isAuthenticated: false }),
-  };
-  
-  return selector(fullState);
-};
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      
+      login: (userData) => {
+        set({ user: userData, isAuthenticated: true });
+      },
+      
+      logout: () => {
+        set({ user: null, isAuthenticated: false });
+      },
+    }),
+    { name: 'user-storage' }
+  )
+);

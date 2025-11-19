@@ -16,10 +16,9 @@ import CaptainEarnings from './CaptainEarnings';
 import CaptainAvailabilityCalendar from './CaptainAvailabilityCalendar';
 import InsuranceVerification from './InsuranceVerification';
 import { CertificationManager } from './CertificationManager';
+import { FleetManagement } from './FleetManagement';
 import CaptainAlertPreferences from './CaptainAlertPreferences';
 import AlertHistoryPanel from './AlertHistoryPanel';
-import CaptainPerformanceTracker from './CaptainPerformanceTracker';
-
 
 
 
@@ -167,9 +166,8 @@ export default function CaptainDashboard() {
 
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="fleet">Fleet</TabsTrigger>
             <TabsTrigger value="certifications">Certs</TabsTrigger>
             <TabsTrigger value="availability">Calendar</TabsTrigger>
@@ -178,7 +176,6 @@ export default function CaptainDashboard() {
             <TabsTrigger value="insurance">Insurance</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
           </TabsList>
-
 
 
 
@@ -270,14 +267,9 @@ export default function CaptainDashboard() {
 
           </TabsContent>
 
-          <TabsContent value="performance">
-            <CaptainPerformanceTracker />
-          </TabsContent>
-
           <TabsContent value="certifications">
             <CertificationManager captainId={captainId} />
           </TabsContent>
-
 
           <TabsContent value="availability">
             <CaptainAvailabilityCalendar captainId={captainId} />

@@ -14,10 +14,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Get environment variables - NO FALLBACKS for security
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
+// Get environment variables with fallback for development
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xzdzmeaxbjvntuqeommq.databasepad.com';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImYzYzVhMDk4LTA5NWQtNDA2Ni05YjU4LTJiYzBhYTc2ODliNCJ9.eyJwcm9qZWN0SWQiOiJ4emR6bWVheGJqdm50dXFlb21tcSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzMjE4OTgyLCJleHAiOjIwNzg1Nzg5ODIsImlzcyI6ImZhbW91cy5kYXRhYmFzZXBhZCIsImF1ZCI6ImZhbW91cy5jbGllbnRzIn0.wCpqb96UA1bx0cpPX4qC4JS4FPxkfTjzDuVSlNxPWVE';
 
 // Validate required environment variables
 if (!supabaseUrl || !supabaseKey) {

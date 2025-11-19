@@ -18,7 +18,7 @@ export default function BiddingModal({ placementType, currentBid, onClose }: Bid
       return;
     }
 
-    // Bid submitted successfully
+    console.log('Bid submitted:', { placementType, bidAmount, listingId });
     alert(`Bid of $${bidAmount}/month submitted successfully! You'll be notified if you win.`);
     onClose();
   };
