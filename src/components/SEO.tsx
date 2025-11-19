@@ -14,7 +14,7 @@ interface SEOProps {
 }
 
 
-export const SEO = ({
+export default function SEO({
   title = 'Gulf Charter Finder - Find & Book Charter Boats',
   description = 'Discover and book the best charter fishing boats, yacht charters, and boat tours across the Gulf Coast. Compare prices, read reviews, and book instantly.',
   keywords = 'charter boats, fishing charters, yacht rentals, boat tours, Gulf Coast, fishing trips, boat booking',
@@ -24,7 +24,7 @@ export const SEO = ({
   structuredData,
   ogSiteName = 'Gulf Coast Charters',
   twitterSite = '@GulfCharters'
-}: SEOProps) => {
+}: SEOProps) {
 
   const location = useLocation();
   const currentUrl = `https://gulfcoastcharters.com${location.pathname}`;
@@ -66,7 +66,7 @@ export const SEO = ({
   }, [title, description, keywords, image, type, currentUrl, canonical, structuredData]);
 
   return null;
-};
+}
 
 function updateMetaTag(name: string, content: string, attr: 'name' | 'property' = 'name') {
   let element = document.querySelector(`meta[${attr}="${name}"]`);

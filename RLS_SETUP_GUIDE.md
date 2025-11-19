@@ -1,139 +1,118 @@
-# Row Level Security (RLS) Setup Guide
+# 🔒 Row Level Security (RLS) Setup Guide
 
-## Why RLS is Critical
-Row Level Security ensures users can only access their own data, preventing unauthorized access to bookings, messages, and personal information.
+## Overview
+This guide helps you enable and configure Row Level Security for all database tables.
 
-## Setup Instructions
+---
 
-### Step 1: Access Supabase SQL Editor
-1. Go to your Supabase Dashboard
-2. Click "SQL Editor" in the left sidebar
-3. Click "New Query"
+## Step 1: Enable RLS on All Tables
 
-### Step 2: Enable RLS on All Tables
-Copy and paste this query, then click "Run":
+Run this SQL in **Supabase SQL Editor**:
 
 ```sql
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE charters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE loyalty_points ENABLE ROW LEVEL SECURITY;
-ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+-- Copy from: supabase/migrations/20240122_enable_rls.sql
 ```
 
-### Step 3: Create Profile Policies
+Or manually enable RLS in Supabase Dashboard:
+1. Go to **Database** > **Tables**
+2. Click on each table
+3. Click **Enable RLS** button
+
+---
+
+## Step 2: Apply RLS Policies
+
+Run this SQL in **Supabase SQL Editor**:
+
 ```sql
--- Anyone can view profiles
-CREATE POLICY "profiles_select_policy" ON profiles
-  FOR SELECT USING (true);
-
--- Users can only update their own profile
-CREATE POLICY "profiles_update_policy" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
--- Users can insert their own profile
-CREATE POLICY "profiles_insert_policy" ON profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+-- Copy from: supabase/migrations/20240122_rls_policies.sql
 ```
 
-### Step 4: Create Booking Policies
+---
+
+## Step 3: Verify RLS is Working
+
+Test with these queries:
+
 ```sql
--- Users can only view their own bookings
-CREATE POLICY "bookings_select_policy" ON bookings
-  FOR SELECT USING (auth.uid() = user_id);
+-- Should return only your data
+SELECT * FROM profiles WHERE id = auth.uid();
 
--- Users can create bookings
-CREATE POLICY "bookings_insert_policy" ON bookings
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Should return only your bookings
+SELECT * FROM bookings WHERE user_id = auth.uid();
 
--- Users can update their own bookings
-CREATE POLICY "bookings_update_policy" ON bookings
-  FOR UPDATE USING (auth.uid() = user_id);
+-- Should return only approved captains
+SELECT * FROM captains WHERE status = 'approved';
 ```
 
-### Step 5: Create Review Policies
-```sql
--- Anyone can view reviews
-CREATE POLICY "reviews_select_policy" ON reviews
-  FOR SELECT USING (true);
+---
 
--- Only users with completed bookings can create reviews
-CREATE POLICY "reviews_insert_policy" ON reviews
-  FOR INSERT WITH CHECK (
-    auth.uid() IN (
-      SELECT user_id FROM bookings 
-      WHERE id = booking_id AND status = 'completed'
+## Common RLS Patterns
+
+### Pattern 1: User Owns Record
+```sql
+CREATE POLICY "Users manage own data"
+  ON table_name FOR ALL
+  USING (auth.uid() = user_id);
+```
+
+### Pattern 2: Public Read, Owner Write
+```sql
+CREATE POLICY "Public read"
+  ON table_name FOR SELECT
+  USING (true);
+
+CREATE POLICY "Owner write"
+  ON table_name FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+```
+
+### Pattern 3: Admin Access
+```sql
+CREATE POLICY "Admin full access"
+  ON table_name FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 ```
 
-### Step 6: Create Charter Policies
-```sql
--- Anyone can view charters
-CREATE POLICY "charters_select_policy" ON charters
-  FOR SELECT USING (true);
-
--- Only captains can manage their charters
-CREATE POLICY "charters_all_policy" ON charters
-  FOR ALL USING (
-    auth.uid() = captain_id
-  );
-```
-
-### Step 7: Create Message Policies
-```sql
--- Users can only see their own messages
-CREATE POLICY "messages_select_policy" ON messages
-  FOR SELECT USING (
-    auth.uid() = sender_id OR auth.uid() = recipient_id
-  );
-
--- Users can send messages
-CREATE POLICY "messages_insert_policy" ON messages
-  FOR INSERT WITH CHECK (auth.uid() = sender_id);
-```
-
-### Step 8: Create Loyalty & Referral Policies
-```sql
--- Users can view their own loyalty points
-CREATE POLICY "loyalty_select_policy" ON loyalty_points
-  FOR SELECT USING (auth.uid() = user_id);
-
--- Users can view their own referrals
-CREATE POLICY "referrals_select_policy" ON referrals
-  FOR SELECT USING (
-    auth.uid() = referrer_id OR auth.uid() = referred_id
-  );
-```
-
-## Verification
-
-After running all queries, verify RLS is working:
-
-1. Go to "Table Editor" in Supabase
-2. Select any table (e.g., "bookings")
-3. You should see a shield icon indicating RLS is enabled
-4. Test by logging in as a user and trying to access another user's data
+---
 
 ## Troubleshooting
 
-**Issue**: Policies not working
-- **Solution**: Make sure you're logged in when testing. RLS only applies to authenticated users.
+### Issue: "Permission Denied"
+**Solution**: Check if RLS is enabled and user has correct policy
 
-**Issue**: Users can't see their own data
-- **Solution**: Check that `auth.uid()` matches the user_id in your policies
+### Issue: "No rows returned"
+**Solution**: Verify auth.uid() matches user_id in table
 
-**Issue**: "permission denied" errors
-- **Solution**: Review policy conditions - they may be too restrictive
+### Issue: "Policy conflict"
+**Solution**: Drop existing policies first:
+```sql
+DROP POLICY IF EXISTS "policy_name" ON table_name;
+```
+
+---
 
 ## Security Best Practices
 
 1. ✅ Always enable RLS on tables with user data
-2. ✅ Test policies with different user roles
-3. ✅ Use `auth.uid()` for user-specific policies
-4. ✅ Keep policies simple and readable
-5. ✅ Document any complex policy logic
+2. ✅ Use auth.uid() to verify ownership
+3. ✅ Separate read and write policies
+4. ✅ Test policies with different user roles
+5. ✅ Use service role key only in edge functions
+6. ❌ Never disable RLS on production tables
+7. ❌ Never use SELECT * in policies without filters
+
+---
+
+## Next Steps
+
+After enabling RLS:
+1. Test all user flows (signup, login, booking)
+2. Verify captains can only see their data
+3. Confirm admins have full access
+4. Check edge functions use service role key

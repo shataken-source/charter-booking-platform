@@ -7,7 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CaptainVerificationBadges from './CaptainVerificationBadges';
+import CertificationBadges from './CertificationBadges';
 import ReviewCard from './ReviewCard';
+import CaptainWeatherBadge from './CaptainWeatherBadge';
+
+
 
 interface CaptainProfilePageProps {
   captainId: string;
@@ -47,13 +51,36 @@ export default function CaptainProfilePage({ captainId }: CaptainProfilePageProp
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-6">
+        <CaptainWeatherBadge 
+          captainId={captainId} 
+          location={captain.location}
+          compact={false}
+        />
+      </div>
+      
       <Card className="mb-6">
+
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
-            <Avatar className="w-32 h-32">
-              <AvatarImage src={captain.avatar} />
-              <AvatarFallback>{captain.name[0]}</AvatarFallback>
-            </Avatar>
+            <div className="flex flex-col items-center">
+              <Avatar className="w-32 h-32 mb-4">
+                <AvatarImage src={captain.avatar} />
+                <AvatarFallback>{captain.name[0]}</AvatarFallback>
+              </Avatar>
+              <CertificationBadges 
+                certifications={{
+                  uscg_license: true,
+                  insurance: true,
+                  first_aid: true,
+                  cpr: true,
+                  safety_cert: true,
+                  master_captain: captain.yearsExperience >= 10
+                }}
+                size="lg"
+              />
+            </div>
+
             
             <div className="flex-1">
               <div className="flex items-start justify-between mb-2">

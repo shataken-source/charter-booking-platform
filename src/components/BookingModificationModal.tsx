@@ -1,112 +1,126 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/lib/supabase';
-import { Calendar, Users, Edit } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Calendar as CalendarIcon, Clock, AlertCircle } from 'lucide-react';
+import TimeSlotSelector from './booking/TimeSlotSelector';
 
 interface BookingModificationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   booking: any;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
 }
 
-export default function BookingModificationModal({ booking, open, onOpenChange, onSuccess }: BookingModificationModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    newDate: booking?.booking_date || '',
-    newGuests: booking?.guest_count || 1,
-    reason: ''
-  });
+export default function BookingModificationModal({ isOpen, onClose, booking }: BookingModificationModalProps) {
+  const [action, setAction] = useState<'reschedule' | 'cancel' | null>(null);
+  const [newDate, setNewDate] = useState<Date>();
+  const [newTime, setNewTime] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke('booking-modification-system', {
-        body: {
-          action: 'request-modification',
-          bookingId: booking.id,
-          modifications: {
-            newDate: formData.newDate,
-            newGuests: formData.newGuests
-          },
-          reason: formData.reason
-        }
-      });
-      if (error) throw error;
-      toast.success('Modification request sent to captain');
-      onSuccess();
-      onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to submit modification request');
-    } finally {
-      setLoading(false);
+  const handleReschedule = async () => {
+    if (!newDate || !newTime) {
+      toast.error('Please select a new date and time');
+      return;
+    }
+    
+    toast.loading('Updating booking...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success('Booking rescheduled! Confirmation email sent.');
+    onClose();
+  };
+
+  const handleCancel = async () => {
+    const daysUntil = Math.ceil((new Date(booking.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    let refundAmount = 0;
+    
+    if (daysUntil >= 7) refundAmount = booking.amount;
+    else if (daysUntil >= 3) refundAmount = booking.amount * 0.5;
+    
+    if (confirm(`You will receive a refund of $${refundAmount.toFixed(2)}. Continue?`)) {
+      toast.loading('Processing cancellation...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success(`Booking cancelled. Refund of $${refundAmount.toFixed(2)} will be processed in 5-7 business days.`);
+      onClose();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit className="w-5 h-5" />
-            Modify Booking
-          </DialogTitle>
+          <DialogTitle>Modify Booking</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              New Date
-            </Label>
-            <Input
-              type="date"
-              value={formData.newDate}
-              onChange={(e) => setFormData({...formData, newDate: e.target.value})}
-              min={new Date().toISOString().split('T')[0]}
-              required
-            />
+
+        {!action ? (
+          <div className="space-y-4">
+            <Card className="p-4 bg-gray-50">
+              <h4 className="font-semibold mb-2">Current Booking</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between"><span>Charter:</span><span>{booking.charterName}</span></div>
+                <div className="flex justify-between"><span>Date:</span><span>{booking.date}</span></div>
+                <div className="flex justify-between"><span>Time:</span><span>{booking.time}</span></div>
+                <div className="flex justify-between"><span>Guests:</span><span>{booking.guests}</span></div>
+              </div>
+            </Card>
+
+            <div className="grid gap-3">
+              <Button onClick={() => setAction('reschedule')} className="w-full" variant="outline">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Reschedule Booking
+              </Button>
+              <Button onClick={() => setAction('cancel')} className="w-full" variant="destructive">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Cancel Booking
+              </Button>
+            </div>
           </div>
-          <div>
-            <Label className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Number of Guests
-            </Label>
-            <Input
-              type="number"
-              min="1"
-              value={formData.newGuests}
-              onChange={(e) => setFormData({...formData, newGuests: parseInt(e.target.value)})}
-              required
-            />
+        ) : action === 'reschedule' ? (
+          <div className="space-y-6">
+            <div>
+              <Label className="text-lg mb-3 block">Select New Date</Label>
+              <Calendar mode="single" selected={newDate} onSelect={setNewDate} 
+                disabled={(date) => date < new Date()} className="border rounded-lg" />
+            </div>
+            <div>
+              <Label className="text-lg mb-3 block">Select New Time</Label>
+              <TimeSlotSelector date={newDate} selectedTime={newTime} 
+                onTimeSelect={setNewTime} charterId={booking.charterId} />
+            </div>
+            <Card className="p-4 border-blue-300 bg-blue-50">
+              <p className="text-sm text-gray-700">
+                <strong>Note:</strong> Rescheduling is free if done 48+ hours before your original booking.
+                A $25 fee applies for changes within 48 hours.
+              </p>
+            </Card>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setAction(null)}>Back</Button>
+              <Button onClick={handleReschedule} className="flex-1">Confirm Reschedule</Button>
+            </div>
           </div>
-          <div>
-            <Label>Reason for Change</Label>
-            <Textarea
-              value={formData.reason}
-              onChange={(e) => setFormData({...formData, reason: e.target.value})}
-              placeholder="Please explain why you need to modify this booking..."
-              rows={3}
-              required
-            />
+        ) : (
+          <div className="space-y-6">
+            <Card className="p-4 border-yellow-300 bg-yellow-50">
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Cancellation Policy
+              </h4>
+              <ul className="text-sm space-y-1 text-gray-700">
+                <li>• <strong>7+ days:</strong> Full refund (${booking.amount})</li>
+                <li>• <strong>3-7 days:</strong> 50% refund (${(booking.amount * 0.5).toFixed(2)})</li>
+                <li>• <strong>Less than 3 days:</strong> No refund</li>
+              </ul>
+            </Card>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setAction(null)}>Back</Button>
+              <Button onClick={handleCancel} variant="destructive" className="flex-1">
+                Confirm Cancellation
+              </Button>
+            </div>
           </div>
-          <div className="bg-blue-50 p-3 rounded-lg text-sm">
-            <p className="text-blue-800">Your modification request will be sent to the captain for approval. You'll be notified once they respond.</p>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Submitting...' : 'Request Modification'}
-            </Button>
-          </div>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );

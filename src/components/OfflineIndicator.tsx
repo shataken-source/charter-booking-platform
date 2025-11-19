@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
-import { WifiOff, Wifi } from 'lucide-react';
+import { Wifi, WifiOff, Cloud, CloudOff } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 export default function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showNotification, setShowNotification] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 3000);
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 3000);
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      setShowNotification(true);
+      setShowBanner(true);
     };
 
     window.addEventListener('online', handleOnline);
@@ -26,27 +27,25 @@ export default function OfflineIndicator() {
     };
   }, []);
 
-  if (!showNotification) return null;
+  if (!showBanner) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top">
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg ${
-        isOnline 
-          ? 'bg-green-500 text-white' 
-          : 'bg-red-500 text-white'
-      }`}>
-        {isOnline ? (
-          <>
-            <Wifi className="w-4 h-4" />
-            <span className="text-sm font-medium">Back online</span>
-          </>
-        ) : (
-          <>
-            <WifiOff className="w-4 h-4" />
-            <span className="text-sm font-medium">You're offline</span>
-          </>
-        )}
-      </div>
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
+      <Card className={`px-4 py-2 shadow-lg ${isOnline ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+        <div className="flex items-center gap-2">
+          {isOnline ? (
+            <>
+              <Wifi className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">Back Online</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm font-medium text-yellow-800">Offline Mode</span>
+            </>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

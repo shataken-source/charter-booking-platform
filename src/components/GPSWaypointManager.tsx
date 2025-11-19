@@ -1,103 +1,78 @@
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Share2, Bell, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { Download, Upload, Plus, Trash2, MapPin } from 'lucide-react';
 
-interface Waypoint {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  notes?: string;
-  captainId: string;
-  shared: boolean;
-}
-
-export function GPSWaypointManager({ captainId }: { captainId: string }) {
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+export default function GPSWaypointManager({ captainId }: { captainId: string }) {
+  const [waypoints, setWaypoints] = useState<any[]>([]);
   const [name, setName] = useState('');
-  const [notes, setNotes] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
     loadWaypoints();
-    watchLocation();
-  }, []);
+  }, [captainId]);
 
   const loadWaypoints = async () => {
     const { data } = await supabase.functions.invoke('gps-waypoints', {
       body: { action: 'list', captainId }
     });
-    setWaypoints(data?.waypoints || []);
+    if (data?.waypoints) setWaypoints(data.waypoints);
   };
 
-  const saveCurrentLocation = async () => {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      await supabase.functions.invoke('gps-waypoints', {
-        body: { 
-          action: 'save', 
-          captainId, 
-          name, 
-          lat: pos.coords.latitude, 
-          lng: pos.coords.longitude,
-          notes 
-        }
-      });
-      toast.success('Waypoint saved!');
-      setName('');
-      setNotes('');
-      loadWaypoints();
-    });
-  };
-
-  const shareWaypoint = async (id: string) => {
+  const handleAdd = async () => {
+    if (!name || !lat || !lng) return;
     await supabase.functions.invoke('gps-waypoints', {
-      body: { action: 'share', waypointId: id }
+      body: { action: 'create', captainId, waypoint: { name, latitude: parseFloat(lat), longitude: parseFloat(lng), description } }
     });
-    toast.success('Waypoint shared with other captains!');
+    setName(''); setLat(''); setLng(''); setDescription('');
+    loadWaypoints();
   };
 
-  const watchLocation = () => {
-    navigator.geolocation.watchPosition((pos) => {
-      waypoints.forEach(wp => {
-        const distance = calculateDistance(pos.coords.latitude, pos.coords.longitude, wp.lat, wp.lng);
-        if (distance < 0.1) {
-          toast.info(`Near waypoint: ${wp.name}`);
-        }
-      });
+  const handleExport = async (format: string) => {
+    const { data } = await supabase.functions.invoke('gps-waypoints', {
+      body: { action: 'export', captainId, format }
     });
+    const blob = new Blob([format === 'gpx' ? data : JSON.stringify(data, null, 2)], { type: format === 'gpx' ? 'application/gpx+xml' : 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waypoints.${format}`;
+    a.click();
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const handleDelete = async (id: string) => {
+    await supabase.functions.invoke('gps-waypoints', {
+      body: { action: 'delete', captainId, waypoint: { id } }
+    });
+    loadWaypoints();
   };
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-bold mb-4">GPS Waypoints</h3>
-      <div className="space-y-3 mb-4">
-        <Input placeholder="Waypoint name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        <Button onClick={saveCurrentLocation} className="w-full">
-          <MapPin className="w-4 h-4 mr-2" />Save Current Location
-        </Button>
+      <h3 className="text-xl font-bold mb-4 flex items-center"><MapPin className="w-5 h-5 mr-2" />GPS Waypoints</h3>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="Latitude" value={lat} onChange={(e) => setLat(e.target.value)} />
+        <Input placeholder="Longitude" value={lng} onChange={(e) => setLng(e.target.value)} />
+        <Input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
+      <div className="flex gap-2 mb-4">
+        <Button onClick={handleAdd}><Plus className="w-4 h-4 mr-2" />Add</Button>
+        <Button variant="outline" onClick={() => handleExport('gpx')}><Download className="w-4 h-4 mr-2" />Export GPX</Button>
+        <Button variant="outline" onClick={() => handleExport('json')}><Download className="w-4 h-4 mr-2" />Export JSON</Button>
       </div>
       <div className="space-y-2">
         {waypoints.map(wp => (
           <div key={wp.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
             <div>
-              <p className="font-medium">{wp.name}</p>
-              <p className="text-xs text-gray-500">{wp.lat.toFixed(4)}, {wp.lng.toFixed(4)}</p>
+              <p className="font-semibold">{wp.name}</p>
+              <p className="text-sm text-gray-600">{wp.latitude}, {wp.longitude}</p>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => shareWaypoint(wp.id)}>
-              <Share2 className="w-4 h-4" />
-            </Button>
+            <Button variant="destructive" size="sm" onClick={() => handleDelete(wp.id)}><Trash2 className="w-4 h-4" /></Button>
           </div>
         ))}
       </div>

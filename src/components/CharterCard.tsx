@@ -7,7 +7,9 @@ import SocialShare from './SocialShare';
 import OptimizedImage from './OptimizedImage';
 import ClaimListingModal from './ClaimListingModal';
 import CaptainVerificationBadges from './CaptainVerificationBadges';
-import CustomerBookingFlow from './booking/CustomerBookingFlow';
+import CompleteBookingFlow from './booking/CompleteBookingFlow';
+
+import CaptainWeatherBadge from './CaptainWeatherBadge';
 
 
 
@@ -111,6 +113,17 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
           <p className="text-sm text-gray-600 mb-3">{props.city}, {props.location}</p>
 
 
+          {props.captainId && (
+            <div className="mb-3">
+              <CaptainWeatherBadge 
+                captainId={props.captainId} 
+                location={props.location}
+                compact={true}
+              />
+            </div>
+          )}
+
+          
 
           
           <div className="flex items-center mb-4">
@@ -192,7 +205,8 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
       
       <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <CustomerBookingFlow charter={props} onClose={() => setShowBookingModal(false)} />
+          <CompleteBookingFlow charter={{...props, title: props.businessName, price: props.priceFullDay, capacity: props.maxPassengers}} onClose={() => setShowBookingModal(false)} />
+
         </DialogContent>
       </Dialog>
     </>

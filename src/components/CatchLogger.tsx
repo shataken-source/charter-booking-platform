@@ -7,7 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Upload, MapPin, Calendar, Fish } from 'lucide-react';
+import { Upload, MapPin, Calendar, Fish, Camera, Sparkles } from 'lucide-react';
+import MobileCameraCapture from './MobileCameraCapture';
+import FishSpeciesRecognition from './FishSpeciesRecognition';
+import { PhotoMetadata } from '@/utils/photoCompression';
+
 
 interface Species {
   id: string;
@@ -20,6 +24,7 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
   const [species, setSpecies] = useState<Species[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [formData, setFormData] = useState({
     species_id: '',
     weight: '',
@@ -27,8 +32,11 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
     location: '',
     catch_date: new Date().toISOString().split('T')[0],
     photo_url: '',
-    notes: ''
+    notes: '',
+    latitude: null as number | null,
+    longitude: null as number | null
   });
+
 
   useEffect(() => {
     loadSpecies();
@@ -68,6 +76,40 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
     }
   };
 
+  const handleCameraCapture = (url: string, metadata: PhotoMetadata) => {
+    setFormData(prev => ({
+      ...prev,
+      photo_url: url,
+      latitude: metadata.latitude || null,
+      longitude: metadata.longitude || null,
+      location: metadata.latitude && metadata.longitude 
+        ? `${metadata.latitude.toFixed(6)}, ${metadata.longitude.toFixed(6)}`
+        : prev.location
+    }));
+    setShowCamera(false);
+    toast.success('Photo captured with location data!');
+  };
+
+  const handleAISpeciesSelect = (speciesName: string, weight: number, length: number) => {
+    // Find matching species ID from database
+    const matchedSpecies = species.find(s => 
+      s.name.toLowerCase().includes(speciesName.toLowerCase()) ||
+      speciesName.toLowerCase().includes(s.name.toLowerCase())
+    );
+
+    setFormData(prev => ({
+      ...prev,
+      species_id: matchedSpecies?.id || prev.species_id,
+      weight: weight.toString(),
+      length: length.toString()
+    }));
+
+    if (!matchedSpecies) {
+      toast.info(`Species "${speciesName}" not found in database. Please select manually.`);
+    }
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -95,9 +137,12 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
         location: '',
         catch_date: new Date().toISOString().split('T')[0],
         photo_url: '',
-        notes: ''
+        notes: '',
+        latitude: null,
+        longitude: null
       });
       onSuccess?.();
+
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -106,7 +151,15 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   return (
-    <Card>
+    <>
+      {showCamera && (
+        <MobileCameraCapture
+          onPhotoCapture={handleCameraCapture}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
+      <Card>
+
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Fish className="w-5 h-5" />
@@ -156,14 +209,40 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
             <Input type="date" value={formData.catch_date} onChange={(e) => setFormData(prev => ({ ...prev, catch_date: e.target.value }))} required />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
+              <Camera className="w-4 h-4" />
               Photo
             </Label>
-            <Input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} />
-            {formData.photo_url && <img src={formData.photo_url} alt="Catch" className="mt-2 w-32 h-32 object-cover rounded" />}
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setShowCamera(true)} variant="outline" className="w-full">
+                <Camera className="mr-2 w-4 h-4" /> Take Photo
+              </Button>
+              <Button type="button" onClick={() => document.getElementById('file-upload')?.click()} variant="outline" className="w-full">
+                <Upload className="mr-2 w-4 h-4" /> Upload
+              </Button>
+            </div>
+            <Input id="file-upload" type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} className="hidden" />
+            {formData.photo_url && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <img src={formData.photo_url} alt="Catch" className="w-full h-48 object-cover rounded-lg" />
+                  {formData.latitude && formData.longitude && (
+                    <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
+                    </div>
+                  )}
+                </div>
+                <FishSpeciesRecognition
+                  imageUrl={formData.photo_url}
+                  onSpeciesSelect={handleAISpeciesSelect}
+                />
+              </div>
+            )}
           </div>
+
+
 
           <div>
             <Label>Notes</Label>
@@ -175,6 +254,7 @@ export default function CatchLogger({ onSuccess }: { onSuccess?: () => void }) {
           </Button>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </>
   );
 }

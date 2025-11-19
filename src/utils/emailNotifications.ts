@@ -1,9 +1,31 @@
-import { supabase } from '@/lib/supabase';
-import { generateBookingConfirmationHTML } from '@/components/email-templates/BookingConfirmationEmail';
-import { generateBookingReminderHTML } from '@/components/email-templates/BookingReminderEmail';
-import { generateCancellationHTML } from '@/components/email-templates/CancellationEmail';
-import { generateBookingUpdateHTML } from '@/components/email-templates/BookingUpdateEmail';
+/**
+ * Email Notifications Utility
+ * 
+ * Handles sending transactional emails for booking lifecycle events.
+ * Uses Mailjet email service via Supabase Edge Functions.
+ * 
+ * Email Types:
+ * - Booking confirmation
+ * - Booking reminders (24h, 1h before)
+ * - Booking cancellations with refund info
+ * - Booking updates (time/date changes)
+ * 
+ * Email Service:
+ * @see https://www.mailjet.com/docs/ - Mailjet API documentation
+ * @see https://dev.mailjet.com/ - Mailjet developer portal
+ * @see supabase/functions/mailjet-email-service/index.ts - Edge function
+ * 
+ * Email Templates:
+ * @see src/components/email-templates/ - Multilingual HTML templates
+ */
 
+import { supabase } from '@/lib/supabase';
+import { BookingConfirmationEmail } from '@/components/email-templates/BookingConfirmationEmail';
+import { BookingReminderEmail } from '@/components/email-templates/BookingReminderEmail';
+
+/**
+ * Booking data structure for email notifications
+ */
 interface BookingData {
   customerName: string;
   customerEmail: string;
@@ -19,17 +41,22 @@ interface BookingData {
   captainPhone?: string;
 }
 
+/**
+ * Send booking confirmation email to customer
+ * Includes booking details, captain info, and calendar link
+ * 
+ * @param booking - Booking details
+ * @returns Promise with email send result
+ */
 export const sendBookingConfirmation = async (booking: BookingData) => {
-  const htmlContent = generateBookingConfirmationHTML({
-    customerName: booking.customerName,
-    bookingId: booking.bookingId,
-    charterName: booking.charterName,
+  const htmlContent = BookingConfirmationEmail({
+    userName: booking.customerName,
+    captainName: booking.captainName,
     date: booking.date,
     time: booking.time,
-    duration: booking.duration || '4 hours',
-    totalPrice: booking.totalPrice || '$500',
-    captainName: booking.captainName,
-    location: booking.location
+    location: booking.location,
+    price: booking.totalPrice || '$500',
+    language: 'en' // TODO: Use user's language preference
   });
 
   return sendEmail({
@@ -41,17 +68,23 @@ export const sendBookingConfirmation = async (booking: BookingData) => {
   });
 };
 
+/**
+ * Send booking reminder email before trip
+ * Typically sent 24 hours and 1 hour before booking
+ * 
+ * @param booking - Booking details
+ * @param hoursUntil - Hours until booking starts
+ * @returns Promise with email send result
+ */
 export const sendBookingReminder = async (booking: BookingData, hoursUntil: number) => {
-  const htmlContent = generateBookingReminderHTML({
-    customerName: booking.customerName,
-    bookingId: booking.bookingId,
-    charterName: booking.charterName,
+  const htmlContent = BookingReminderEmail({
+    userName: booking.customerName,
+    captainName: booking.captainName,
     date: booking.date,
     time: booking.time,
     location: booking.location,
-    captainName: booking.captainName,
-    captainPhone: booking.captainPhone || '(555) 123-4567',
-    hoursUntil
+    hoursUntil,
+    language: 'en' // TODO: Use user's language preference
   });
 
   return sendEmail({
@@ -62,19 +95,21 @@ export const sendBookingReminder = async (booking: BookingData, hoursUntil: numb
   });
 };
 
+/**
+ * Send cancellation email with refund information
+ * 
+ * @param booking - Booking details
+ * @param refundAmount - Refund amount string (e.g., "$450")
+ * @param reason - Optional cancellation reason
+ * @returns Promise with email send result
+ */
 export const sendCancellationEmail = async (
   booking: BookingData,
   refundAmount: string,
   reason?: string
 ) => {
-  const htmlContent = generateCancellationHTML({
-    customerName: booking.customerName,
-    bookingId: booking.bookingId,
-    charterName: booking.charterName,
-    date: booking.date,
-    refundAmount,
-    cancellationReason: reason
-  });
+  // TODO: Create proper CancellationEmail template component
+  const htmlContent = `<h1>Booking Cancelled</h1><p>Your booking has been cancelled. Refund: ${refundAmount}</p>`;
 
   return sendEmail({
     to: booking.customerEmail,
@@ -83,22 +118,26 @@ export const sendCancellationEmail = async (
   });
 };
 
+/**
+ * Send booking update notification
+ * Used when booking details change (time, date, location)
+ * 
+ * @param booking - Booking details
+ * @param updateType - Type of update (e.g., "Time", "Date")
+ * @param oldValue - Previous value
+ * @param newValue - New value
+ * @param message - Optional additional message
+ * @returns Promise with email send result
+ */
 export const sendBookingUpdate = async (
   booking: BookingData,
-  updateType: 'date_change' | 'time_change' | 'captain_change' | 'location_change' | 'general',
+  updateType: string,
   oldValue: string,
   newValue: string,
   message?: string
 ) => {
-  const htmlContent = generateBookingUpdateHTML({
-    customerName: booking.customerName,
-    bookingId: booking.bookingId,
-    charterName: booking.charterName,
-    updateType,
-    oldValue,
-    newValue,
-    message
-  });
+  // TODO: Create proper BookingUpdateEmail template component
+  const htmlContent = `<h1>Booking Updated</h1><p>${updateType}: ${oldValue} → ${newValue}</p><p>${message || ''}</p>`;
 
   return sendEmail({
     to: booking.customerEmail,
@@ -108,6 +147,14 @@ export const sendBookingUpdate = async (
   });
 };
 
+/**
+ * Internal function to send email via Mailjet service
+ * Calls Supabase Edge Function that interfaces with Mailjet API
+ * 
+ * @param emailData - Email configuration and content
+ * @returns Promise with send result
+ * @throws Error if email sending fails
+ */
 const sendEmail = async (emailData: {
   to: string;
   subject: string;

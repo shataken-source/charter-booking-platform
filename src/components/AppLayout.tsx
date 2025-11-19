@@ -1,156 +1,60 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Anchor, MapPin, Users, Award, Globe, Fish } from 'lucide-react';
-import { featuredCharters } from '@/data/featuredCharters';
-import { SuggestionBox } from './SuggestionBox';
-import CatchLogger from './CatchLogger';
-import CatchLeaderboard from './CatchLeaderboard';
-import { CatchOfTheDay } from './CatchOfTheDay';
-import { FishingBuddyFinder } from './FishingBuddyFinder';
-import { TripPhotoAlbum } from './TripPhotoAlbum';
-import { LaunchCelebrationPopup } from './LaunchCelebrationPopup';
+/**
+ * AppLayout Component
+ * 
+ * Main layout wrapper for the entire application. Provides consistent structure
+ * across all pages including navigation, footer, PWA features, and AI assistant.
+ * 
+ * Features:
+ * - Enhanced navigation with role-based menus
+ * - PWA install prompt with rewards
+ * - Offline indicator for network status
+ * - Fishy AI assistant (context-aware based on user role)
+ * - Responsive footer with comprehensive links
+ * 
+ * @see NavigationEnhanced - Main navigation component
+ * @see FishyAIChat - AI assistant component
+ */
 
+import NavigationEnhanced from './NavigationEnhanced';
+import Footer from './Footer';
+import PWAEnhancedInstallPrompt from './PWAEnhancedInstallPrompt';
+import OfflineIndicator from './OfflineIndicator';
+import FishyAIChat from './FishyAIChat';
+import { useUser } from '@/contexts/UserContext';
 
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
 
-export default function AppLayout() {
-  const [selectedCharter, setSelectedCharter] = useState<any>(null);
-  const [showSuggestionBox, setShowSuggestionBox] = useState(false);
-  const [showCatchLogger, setShowCatchLogger] = useState(false);
-  const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
-
+/**
+ * Main application layout component
+ * Wraps all pages with consistent navigation, footer, and global features
+ */
+export default function AppLayout({ children }: AppLayoutProps) {
+  const { user } = useUser();
 
   return (
-    <div className="min-h-screen bg-white">
-      <LaunchCelebrationPopup />
-
-
-      <nav className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white sticky top-0 z-50 shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <Anchor className="w-8 h-8" />
-              <span className="text-xl font-bold">Gulf Coast Charters</span>
-            </div>
-            <div className="hidden md:flex space-x-4 items-center text-sm">
-              <button onClick={() => document.getElementById('charters')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-100">Charters</button>
-              <button onClick={() => document.getElementById('leaderboard')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-100">Leaderboard</button>
-              <button onClick={() => setShowCatchLogger(true)} className="hover:text-blue-100 flex items-center gap-1">
-                <Fish className="w-4 h-4" />
-                Log Catch
-              </button>
-              <button onClick={() => setShowSuggestionBox(true)} className="hover:text-blue-100">Feedback</button>
-              <Button size="sm" className="bg-white text-blue-600" data-auth-trigger="signup">Login</Button>
-
-            </div>
-          </div>
-        </div>
-      </nav>
-
-
-      <section className="relative h-[500px] flex items-center justify-center text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-cyan-900/60 z-10"></div>
-        <img src="https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763349026286_fce8a245.webp" alt="Gulf Coast" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="relative z-20 text-center px-4">
-          <h1 className="text-6xl font-bold mb-4">Gulf Coast's Premier Fishing Charters</h1>
-          <p className="text-xl mb-6">From Texas to Florida</p>
-          <Button size="lg" className="bg-white text-blue-600" onClick={() => document.getElementById('charters')?.scrollIntoView({ behavior: 'smooth' })}>Browse Charters</Button>
-        </div>
-      </section>
-
-      <section id="charters" className="container mx-auto px-4 py-12">
-        <h2 className="text-5xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Featured Charters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {featuredCharters.map(charter => (
-            <div key={charter.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition cursor-pointer" onClick={() => setSelectedCharter(charter)}>
-              <img src={charter.image} alt={charter.name} className="w-full h-48 object-cover rounded-t-xl" />
-              <div className="p-4">
-                <h3 className="text-xl font-bold mb-2">{charter.name}</h3>
-                <p className="text-gray-600 text-sm mb-2">{charter.location}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-blue-600">${charter.price}</span>
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-cyan-600">Book</Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-r from-blue-600 to-cyan-600 py-12">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
-          <div><Anchor className="w-12 h-12 mx-auto mb-2" /><div className="text-3xl font-bold">500+</div><div>Charters</div></div>
-          <div><Globe className="w-12 h-12 mx-auto mb-2" /><div className="text-3xl font-bold">5 States</div><div>Coverage</div></div>
-          <div><Users className="w-12 h-12 mx-auto mb-2" /><div className="text-3xl font-bold">15K+</div><div>Anglers</div></div>
-          <div><Award className="w-12 h-12 mx-auto mb-2" /><div className="text-3xl font-bold">4.8★</div><div>Rating</div></div>
-        </div>
-      </section>
-
-      <section className="container mx-auto px-4 py-12 space-y-12">
-        <CatchOfTheDay />
-        
-        <div id="leaderboard">
-          <CatchLeaderboard key={refreshLeaderboard} />
-        </div>
-
-        <TripPhotoAlbum />
-
-        <FishingBuddyFinder />
-      </section>
-
-
-
-
-
-      {selectedCharter && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCharter(null)}>
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-t-4 border-t-blue-600" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 rounded-t-2xl">
-              <h2 className="text-3xl font-bold mb-2">{selectedCharter.name}</h2>
-              <p className="text-blue-100">Your Gulf Coast Fishing Adventure Awaits</p>
-            </div>
-            <div className="p-6">
-              <img src={selectedCharter.image} alt={selectedCharter.name} className="w-full h-64 object-cover rounded-lg mb-4" />
-              <p className="text-gray-700 mb-4 leading-relaxed">{selectedCharter.description}</p>
-              <div className="flex items-center justify-between mb-6 p-4 bg-blue-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Starting at</p>
-                  <p className="text-3xl font-bold text-blue-600">${selectedCharter.price}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-semibold">{selectedCharter.location}</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600">Book Now</Button>
-                <Button variant="outline" onClick={() => setSelectedCharter(null)}>Close</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showSuggestionBox && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowSuggestionBox(false)}>
-          <div className="max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <SuggestionBox userType="customer" />
-            <Button className="w-full mt-4" variant="outline" onClick={() => setShowSuggestionBox(false)}>Close</Button>
-          </div>
-        </div>
-      )}
-
-      {showCatchLogger && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowCatchLogger(false)}>
-          <div className="max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
-            <CatchLogger onSuccess={() => {
-              setShowCatchLogger(false);
-              setRefreshLeaderboard(prev => prev + 1);
-            }} />
-            <Button className="w-full mt-4" variant="outline" onClick={() => setShowCatchLogger(false)}>Close</Button>
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Enhanced navigation with dropdowns and language selector */}
+      <NavigationEnhanced />
+      
+      {/* PWA install prompt - offers points reward for installation */}
+      <PWAEnhancedInstallPrompt />
+      
+      {/* Network status indicator - shows when offline */}
+      <OfflineIndicator />
+      
+      {/* Main content area - pages render here */}
+      <main className="flex-grow">
+        {children}
+      </main>
+      
+      {/* Comprehensive footer with links and information */}
+      <Footer />
+      
+      {/* Fishy AI assistant - context-aware based on user role */}
+      <FishyAIChat userType={user?.role === 'captain' ? 'captain' : 'customer'} />
     </div>
   );
 }
+

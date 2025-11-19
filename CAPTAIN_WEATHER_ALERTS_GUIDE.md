@@ -1,220 +1,176 @@
-# Captain Weather Alert System Guide
+# Captain Weather Alert System - Visual Storm Warnings
 
 ## Overview
-The Captain Weather Alert System allows captains to set custom thresholds for weather and marine conditions at specific NOAA buoy locations. When conditions exceed or fall below these thresholds, automated SMS and email notifications are sent.
+The Captain Weather Alert System provides real-time visual storm warnings on captain profiles and search results with severity-based color indicators.
 
 ## Features
 
-### 1. Custom Alert Preferences
-- **Per-Buoy Configuration**: Set different thresholds for each of 10 Gulf Coast buoys
-- **Vessel Type Specific**: Configure alerts based on vessel type (Small Fishing Boat, Medium Charter, Large Charter, Sailboat, Catamaran, Yacht)
-- **Multiple Thresholds**:
-  - Maximum Wave Height (feet)
-  - Maximum Wind Speed (knots)
-  - Minimum Water Temperature (°F)
-  - Maximum Water Temperature (°F)
+### 1. Visual Storm Warning Badges
+- **Yellow Badge**: Weather Watch or Moderate conditions
+- **Orange Badge**: Weather Warning
+- **Red Badge**: Severe or Extreme weather conditions
+- Animated pulse effect for visibility
+- Automatic updates every 5 minutes
 
-### 2. Multi-Channel Notifications
-- **Email Alerts**: Sent via Mailjet email service
-- **SMS Alerts**: Sent via Sinch SMS service
-- **Configurable**: Enable/disable each channel per alert preference
+### 2. Captain Profile Integration
+- Prominent weather alert displayed at top of profile page
+- Full alert details including:
+  - Event type (hurricane, tropical storm, etc.)
+  - Severity level
+  - Affected date range
+  - Start and end dates
 
-### 3. Alert History
-- View all past alerts with timestamps
-- See threshold vs actual values
-- Track which notification methods were used
-- Filter by buoy, date, or alert type
+### 3. Search Results Integration
+- Compact weather badges on captain cards
+- Quick visual identification of affected captains
+- Maintains card layout and design
 
-## Gulf Coast Buoy Stations
+### 4. Filter by Weather Status
+- `hideWeatherAffected` filter option in CharterGrid
+- Allows customers to find captains not in storm path
+- Integrated with existing filter system
 
-| Buoy ID | Location | Coverage Area |
-|---------|----------|---------------|
-| 42040 | Luke Offshore, LA | Louisiana Coast |
-| 42039 | Pensacola, FL | Northwest Florida |
-| 42036 | West Tampa, FL | West Central Florida |
-| 42001 | Mid Gulf | Central Gulf of Mexico |
-| 42002 | West Gulf | Western Gulf of Mexico |
-| 42019 | Freeport, TX | Texas Coast |
-| 42020 | Corpus Christi, TX | South Texas |
-| 42035 | Galveston, TX | Upper Texas Coast |
-| 42012 | Orange Beach, AL | Alabama Coast |
-| 42007 | South Tampa, FL | Southwest Florida |
+## Component Usage
 
-## Using the Alert System
+### CaptainWeatherBadge Component
+```tsx
+import CaptainWeatherBadge from '@/components/CaptainWeatherBadge';
 
-### Setting Up Alerts
+// Compact mode (for cards)
+<CaptainWeatherBadge 
+  captainId="captain-123" 
+  location="Destin, FL"
+  compact={true}
+/>
 
-1. **Navigate to Captain Dashboard**
-   - Go to `/captain-dashboard`
-   - Click on the "Alerts" tab
+// Full mode (for profile pages)
+<CaptainWeatherBadge 
+  captainId="captain-123" 
+  location="Destin, FL"
+  compact={false}
+/>
+```
 
-2. **Add New Alert Preference**
-   - Click "Add Alert" button
-   - Select vessel type from dropdown
-   - Choose buoy station
-   - Set threshold values (only set thresholds you want to monitor)
-   - Toggle email/SMS preferences
-   - Click "Save Alert Preference"
+### Props
+- `captainId` (required): Captain's unique identifier
+- `location` (optional): Captain's location for weather lookup
+- `compact` (boolean): Display mode - true for small badge, false for full alert
 
-3. **Manage Existing Alerts**
-   - View all active alert preferences
-   - Delete unwanted alerts with trash icon
-   - Alerts are automatically checked every 5 minutes
+## Backend Integration
 
-### Alert Threshold Examples
+### Edge Function: captain-weather-alerts
+**Endpoint**: `check_captain_weather`
 
-**Small Fishing Boat (Cautious)**
-- Max Wave Height: 3.0 ft
-- Max Wind Speed: 15 kt
-- Min Water Temp: 70°F
-
-**Medium Charter (Moderate)**
-- Max Wave Height: 5.0 ft
-- Max Wind Speed: 25 kt
-- Min Water Temp: 65°F
-
-**Large Charter (Experienced)**
-- Max Wave Height: 8.0 ft
-- Max Wind Speed: 35 kt
-- Min Water Temp: 60°F
-
-## Edge Function: captain-weather-alerts
-
-### API Actions
-
-**Get Preferences**
-```javascript
+**Request**:
+```json
 {
-  action: 'getPreferences',
-  captainId: 'captain-uuid'
+  "action": "check_captain_weather",
+  "captain_id": "uuid",
+  "location": "Destin, FL"
 }
 ```
 
-**Save Preference**
-```javascript
+**Response**:
+```json
 {
-  action: 'savePreference',
-  preference: {
-    vesselType: 'Medium Charter',
-    buoyId: '42040',
-    maxWaveHeight: 5.0,
-    maxWindSpeed: 25.0,
-    alertViaEmail: true,
-    alertViaSms: true
+  "alert": {
+    "severity": "severe",
+    "event": "Hurricane Warning",
+    "start_date": "2024-11-20T00:00:00Z",
+    "end_date": "2024-11-22T00:00:00Z"
   }
 }
 ```
 
-**Delete Preference**
-```javascript
-{
-  action: 'deletePreference',
-  preferenceId: 'preference-uuid'
-}
+### Severity Levels
+1. **Extreme/Severe**: Red badge, high priority
+2. **Warning**: Orange badge, medium priority
+3. **Watch/Moderate**: Yellow badge, low priority
+4. **Advisory**: Blue badge, informational
+
+## Automatic Updates
+- Weather data refreshes every 5 minutes
+- Uses React useEffect with cleanup
+- Prevents memory leaks on component unmount
+- Real-time severity indicator updates
+
+## Customer Experience
+
+### Finding Safe Captains
+1. Navigate to search results
+2. Weather badges automatically appear on affected captains
+3. Use filter to show only captains not in storm path
+4. View full weather details on captain profile
+
+### Visual Indicators
+- **Pulsing Badge**: Active weather alert
+- **Color Coding**: Severity at a glance
+- **Date Range**: Plan around weather windows
+- **Alternative Captains**: Easy discovery of safe options
+
+## Database Schema
+
+### Weather Alerts Table
+```sql
+CREATE TABLE weather_alerts (
+  id UUID PRIMARY KEY,
+  captain_id UUID REFERENCES captains(id),
+  severity TEXT,
+  event TEXT,
+  description TEXT,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  location TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
-**Get Alert History**
-```javascript
-{
-  action: 'getAlertHistory',
-  captainId: 'captain-uuid'
-}
+## Testing
+
+### Manual Testing
+1. Create test weather alert for captain
+2. View captain profile - alert should appear at top
+3. View captain in search results - compact badge visible
+4. Toggle weather filter - captain should hide/show
+5. Wait 5 minutes - alert should auto-refresh
+
+### Test Data
+```sql
+INSERT INTO weather_alerts (captain_id, severity, event, start_date, end_date, location)
+VALUES (
+  'captain-uuid',
+  'severe',
+  'Hurricane Warning',
+  NOW(),
+  NOW() + INTERVAL '3 days',
+  'Destin, FL'
+);
 ```
-
-**Check Conditions** (Automated)
-```javascript
-{
-  action: 'checkConditions',
-  buoyId: '42040',
-  preference: { /* preference object */ }
-}
-```
-
-## Automated Monitoring
-
-### How It Works
-1. Every 5 minutes, the system checks all active alert preferences
-2. For each preference, it fetches real-time data from the specified NOAA buoy
-3. Compares actual conditions against captain-defined thresholds
-4. If any threshold is exceeded:
-   - Creates alert history record
-   - Sends email notification (if enabled)
-   - Sends SMS notification (if enabled)
-   - Logs the event
-
-### Notification Content
-Alerts include:
-- Buoy location and ID
-- Alert type (Wave Height, Wind Speed, Water Temperature)
-- Threshold value vs actual value
-- Timestamp
-- Vessel type affected
-- Safety recommendations
-
-## Components
-
-### CaptainAlertPreferences.tsx
-- Form for creating/managing alert preferences
-- Vessel type and buoy selection
-- Threshold input fields
-- Email/SMS toggle switches
-- List of active preferences with delete option
-
-### AlertHistoryPanel.tsx
-- Displays chronological alert history
-- Color-coded by alert type
-- Shows notification methods used
-- Threshold vs actual value comparison
-- Timestamp for each alert
-
-## Integration with Other Systems
-
-### Weather API Integration
-- Uses `noaa-buoy-data` edge function for real-time conditions
-- Fetches wave height, wind speed, water temperature
-- Updates every 5 minutes from NOAA servers
-
-### Email Notifications
-- Sent via `mailjet-email-service` edge function
-- Professional HTML templates
-- Includes safety recommendations
-- Links to NOAA marine forecasts
-
-### SMS Notifications
-- Sent via `sms-booking-reminders` edge function
-- Concise text messages
-- Critical information only
-- Links to detailed forecast
 
 ## Best Practices
 
-1. **Set Realistic Thresholds**: Base on vessel capabilities and experience level
-2. **Test Notifications**: Create a test alert to verify email/SMS delivery
-3. **Monitor Multiple Buoys**: Set alerts for all buoys in your operating area
-4. **Adjust Seasonally**: Update thresholds based on seasonal conditions
-5. **Review History**: Learn from past alerts to refine thresholds
+### For Captains
+- Keep location information accurate
+- Monitor weather dashboard regularly
+- Update availability during severe weather
+- Communicate with customers proactively
 
-## Troubleshooting
+### For Customers
+- Check weather badges before booking
+- Use date range to plan trips
+- Consider alternative captains during alerts
+- Contact captain for weather-related questions
 
-**Not Receiving Alerts**
-- Verify email/SMS toggles are enabled
-- Check contact information in captain profile
-- Ensure thresholds are set (empty = no monitoring)
-- Confirm buoy is reporting data
-
-**Too Many Alerts**
-- Increase threshold values
-- Disable alerts for distant buoys
-- Adjust vessel type to more appropriate category
-
-**Missing Alert History**
-- History is retained for 90 days
-- Check date filters
-- Verify captain ID matches
+## Related Files
+- `src/components/CaptainWeatherBadge.tsx` - Main component
+- `src/components/CharterCard.tsx` - Search result integration
+- `src/components/CaptainProfilePage.tsx` - Profile page integration
+- `src/components/CharterGrid.tsx` - Filter integration
+- `supabase/functions/captain-weather-alerts/index.ts` - Backend API
 
 ## Future Enhancements
-- Push notifications via mobile app
-- Predictive alerts based on forecast trends
-- Group alerts by charter booking
-- Custom alert schedules (e.g., only during business hours)
-- Integration with captain availability calendar
+- Push notifications for severe weather
+- Historical weather impact on bookings
+- Weather-based pricing adjustments
+- Integration with NOAA real-time data
+- Automatic booking rescheduling options

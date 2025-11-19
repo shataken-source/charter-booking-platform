@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, DollarSign, Users, CheckCircle, Clock, Mail, Star, Shield } from 'lucide-react';
+import { Calendar, DollarSign, Users, CheckCircle, Clock, Mail, Star, Shield, Gift, TrendingUp } from 'lucide-react';
 import { ReviewModeration } from './ReviewModeration';
 import { supabase } from '@/lib/supabase';
 import SMSVerificationModal from './SMSVerificationModal';
@@ -28,6 +28,21 @@ import { EnhancedDocumentUpload } from './captain/EnhancedDocumentUpload';
 import { CaptainComplianceOverview } from './captain/CaptainComplianceOverview';
 import { CaptainExpirationTimeline } from './captain/CaptainExpirationTimeline';
 import CustomEmailPurchase from './CustomEmailPurchase';
+import CertificationBadges from './CertificationBadges';
+import CaptainDocumentPurchase from './captain/CaptainDocumentPurchase';
+import TrainingAcademyDashboard from './training/TrainingAcademyDashboard';
+import LicenseVerificationPanel from './captain/LicenseVerificationPanel';
+import LastMinuteDealsManager from './LastMinuteDealsManager';
+import FishyOnboardingBot from './FishyOnboardingBot';
+import FishyAIChat from './FishyAIChat';
+import CaptainAvailabilityManager from './captain/CaptainAvailabilityManager';
+
+
+
+
+
+
+
 
 
 
@@ -64,8 +79,22 @@ export default function CaptainDashboard() {
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const captainId = 'captain1'; // In production, get from auth context
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('hasSeen CaptainOnboarding');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenCaptainOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
 
 
   // Mock earnings data for charts
@@ -171,10 +200,38 @@ export default function CaptainDashboard() {
       <SEO
         title="Captain Dashboard - Gulf Charter Finder"
         description="Manage your charter bookings, view analytics, and communicate with customers on Gulf Charter Finder."
-        type="article"
       />
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">Captain Dashboard</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Captain Dashboard</h1>
+          <CertificationBadges 
+            certifications={{
+              uscg_license: true,
+              insurance: true,
+              first_aid: true,
+              cpr: true,
+              safety_cert: true,
+              master_captain: false
+            }}
+            size="md"
+          />
+        </div>
+
+        <Card className="p-4 mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200">
+          <div className="flex items-start gap-3">
+            <Gift className="text-blue-600 flex-shrink-0" size={24} />
+            <div>
+              <h3 className="font-bold text-blue-900 mb-2">Boost Your Referrals!</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Get everyone on your charter to create an account = <span className="font-bold text-blue-600">1 referral point per person!</span>
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <TrendingUp size={16} className="text-green-600" />
+                <span className="text-gray-600">A full 6-person charter = 6 referral points. Points add up fast!</span>
+              </div>
+            </div>
+          </div>
+        </Card>
 
 
         {analytics && (
@@ -221,18 +278,27 @@ export default function CaptainDashboard() {
 
 
         <Tabs defaultValue="bookings" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+          <TabsList className="grid w-full grid-cols-7 lg:grid-cols-14">
+
             <TabsTrigger value="bookings" className="text-xs sm:text-sm">Bookings</TabsTrigger>
             <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
+            <TabsTrigger value="deals" className="text-xs sm:text-sm">Deals</TabsTrigger>
+            <TabsTrigger value="availability" className="text-xs sm:text-sm">Availability</TabsTrigger>
             <TabsTrigger value="earnings" className="text-xs sm:text-sm">Earnings</TabsTrigger>
             <TabsTrigger value="messages" className="text-xs sm:text-sm">Messages</TabsTrigger>
             <TabsTrigger value="documents" className="text-xs sm:text-sm">Documents</TabsTrigger>
+            <TabsTrigger value="licenses" className="text-xs sm:text-sm">Licenses</TabsTrigger>
             <TabsTrigger value="fleet" className="text-xs sm:text-sm">Fleet</TabsTrigger>
             <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
             <TabsTrigger value="performance" className="text-xs sm:text-sm">Stats</TabsTrigger>
             <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
             <TabsTrigger value="alerts" className="text-xs sm:text-sm">Alerts</TabsTrigger>
+            <TabsTrigger value="training" className="text-xs sm:text-sm">Training</TabsTrigger>
           </TabsList>
+
+
+
+
 
 
 
@@ -331,21 +397,36 @@ export default function CaptainDashboard() {
             <BookingManagementPanel bookings={bookings} onUpdate={loadBookings} />
           </TabsContent>
 
+
+          <TabsContent value="deals">
+            <LastMinuteDealsManager captainId={captainId} />
+          </TabsContent>
+
+
+          <TabsContent value="availability">
+            <CaptainAvailabilityManager captainId={captainId} />
+          </TabsContent>
+
           <TabsContent value="earnings">
             <EarningsChartPanel data={earningsData} />
           </TabsContent>
+
+
 
           <TabsContent value="messages">
             <CustomerMessagingPanel captainId={captainId} />
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-6">
+            <CaptainDocumentPurchase />
+            
             <CustomEmailPurchase 
               userId={captainId}
               userType="captain"
               currentPoints={0}
               onPurchaseSuccess={loadDocuments}
             />
+
             
             <CaptainComplianceOverview 
               captainId={captainId} 
@@ -394,10 +475,20 @@ export default function CaptainDashboard() {
             <AlertHistoryPanel />
           </TabsContent>
 
+          <TabsContent value="training">
+            <TrainingAcademyDashboard captainId={captainId} />
+          </TabsContent>
+
+
 
 
         </Tabs>
 
+        {showOnboarding && (
+          <FishyOnboardingBot userType="captain" onComplete={handleOnboardingComplete} />
+        )}
+
+        <FishyAIChat userType="captain" context={{ page: 'captain-dashboard' }} />
 
       </div>
 
@@ -416,5 +507,3 @@ export default function CaptainDashboard() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}

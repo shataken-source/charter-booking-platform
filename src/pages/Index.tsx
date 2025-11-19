@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { AppProvider } from '@/contexts/AppContext';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 import { generateReferralMetaTags, generateReferralStructuredData } from '@/utils/referralMetaTags';
 import { useLocation } from 'react-router-dom';
 

@@ -1,158 +1,165 @@
-# E2E Testing Guide with Playwright
+# Security Testing Guide
 
-## Overview
+## Quick Start
 
-This project uses Playwright for end-to-end testing with visual regression capabilities. Tests run automatically in the CI/CD pipeline and block deployments if they fail.
-
-## Running Tests Locally
-
-### Install Playwright
+### Run All Security Tests
 ```bash
-npm install
-npx playwright install --with-deps
+npm run test:security:all
 ```
 
-### Run All Tests
+### Run Individual Test Suites
 ```bash
-npm run test
+# Row Level Security tests
+npm run test:security:rls
+
+# Rate limiting tests
+npm run test:security:rate-limit
+
+# 2FA enforcement tests
+npm run test:security:2fa
+
+# Penetration tests
+npm run test:security:pentest
+
+# Generate full audit report
+npm run test:security:audit
 ```
 
-### Run Tests in Headed Mode (with browser UI)
-```bash
-npm run test:headed
+## Test Environment Setup
+
+### Prerequisites
+1. Node.js 18+ installed
+2. Environment variables configured in `.env`:
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-### Run Tests in UI Mode (interactive)
+3. Test user accounts:
+   - Regular user: test@example.com
+   - Admin user: admin@gulfcoastcharters.com
+   - Captain user: captain@example.com
+
+### Database Setup
+Run RLS migrations first:
 ```bash
-npm run test:ui
+# Enable RLS on all tables
+psql -f supabase/migrations/20240122_enable_rls.sql
+
+# Apply RLS policies
+psql -f supabase/migrations/20240122_rls_policies.sql
 ```
-
-### Debug Tests
-```bash
-npm run test:debug
-```
-
-### Run Specific Browser Tests
-```bash
-npm run test:chromium
-npm run test:firefox
-npm run test:webkit
-npm run test:mobile
-```
-
-### Update Visual Regression Snapshots
-```bash
-npm run test:visual
-```
-
-### View Test Report
-```bash
-npm run test:report
-```
-
-## Test Structure
-
-### Critical User Flows Covered
-1. **Authentication** (`tests/e2e/auth.spec.ts`)
-   - Login modal display
-   - Form validation
-   - Successful login
-   - Visual regression for login UI
-
-2. **Booking** (`tests/e2e/booking.spec.ts`)
-   - Charter listing display
-   - Booking modal interaction
-   - Complete booking flow
-   - Visual regression for listings
-
-3. **Payment** (`tests/e2e/payment.spec.ts`)
-   - Payment page navigation
-   - Form field validation
-   - Payment processing
-   - Visual regression for payment UI
-
-## Visual Regression Testing
-
-Playwright automatically captures screenshots and compares them against baseline images. If differences are detected, tests will fail.
-
-### Updating Baseline Screenshots
-When UI changes are intentional:
-```bash
-npm run test:visual
-```
-
-This updates the baseline screenshots in `tests/e2e/*.spec.ts-snapshots/`
 
 ## CI/CD Integration
 
-### Staging Deployments
-- Tests run on every push to `develop` branch
-- Failed tests don't block staging deployment (warning only)
-- Test results uploaded as artifacts
+### GitHub Actions
+Security tests run automatically on:
+- Push to `main` or `develop` branches
+- Pull requests to `main`
+- Daily at 2 AM UTC (scheduled)
 
-### Production Deployments
-- Tests run on every push to `main` branch
-- **Failed tests BLOCK production deployment**
-- Can skip tests with workflow dispatch input (use with caution)
+### Deployment Blocking
+Deployments are blocked if:
+- Security score < 80%
+- Any critical severity issues found
+- RLS policies fail
+- 2FA enforcement fails
 
-### Pull Requests
-- Tests run on all PRs to `main` and `develop`
-- Test results posted as PR comments
-- PR cannot merge if tests fail
+## Understanding Test Results
 
-## Writing New Tests
+### Security Score
+- **90-100%**: Excellent security posture
+- **80-89%**: Good, minor improvements needed
+- **70-79%**: Fair, address issues soon
+- **Below 70%**: Poor, immediate action required
 
-### Basic Test Structure
-```typescript
-import { test, expect } from '@playwright/test';
+### Test Categories
 
-test.describe('Feature Name', () => {
-  test('should do something', async ({ page }) => {
-    await page.goto('/');
-    await page.click('button');
-    await expect(page.locator('selector')).toBeVisible();
-  });
-});
-```
+#### RLS Tests (Critical)
+Verifies data isolation between users. Failures indicate:
+- Users can access unauthorized data
+- Data leakage between accounts
+- Broken authorization logic
 
-### Visual Regression Test
-```typescript
-test('visual regression - component name', async ({ page }) => {
-  await page.goto('/page');
-  await expect(page).toHaveScreenshot('component-name.png');
-});
-```
+#### Rate Limiting (High)
+Protects against DDoS and brute force. Failures indicate:
+- API endpoints vulnerable to abuse
+- Login endpoints can be brute-forced
+- No traffic throttling
 
-## Best Practices
+#### 2FA Tests (High)
+Ensures admin account security. Failures indicate:
+- Admin accounts without 2FA
+- 2FA bypass vulnerabilities
+- Weak authentication
 
-1. **Use data-testid attributes** for reliable selectors
-2. **Wait for elements** before interacting
-3. **Test user flows**, not implementation details
-4. **Keep tests independent** - each test should work in isolation
-5. **Update snapshots carefully** - review visual changes before updating
+#### Penetration Tests (Critical)
+Simulates real attacks. Failures indicate:
+- SQL injection vulnerabilities
+- XSS attack vectors
+- CSRF weaknesses
 
 ## Troubleshooting
 
-### Tests Fail Locally But Pass in CI
-- Ensure you're using the same Playwright version
-- Check viewport sizes match CI configuration
-- Run `npx playwright install` to update browsers
+### Common Issues
 
-### Visual Regression Failures
-- Review screenshots in `test-results/`
-- Compare with baseline in `tests/e2e/*.spec.ts-snapshots/`
-- Update baselines if changes are intentional
+**Tests timing out:**
+- Check network connectivity
+- Verify Supabase is accessible
+- Increase timeout in test files
 
-### Timeout Errors
-- Increase timeout in test: `test.setTimeout(60000)`
-- Check if application is slow to load
-- Verify network requests complete
+**RLS tests failing:**
+- Verify migrations are applied
+- Check RLS is enabled: `SELECT * FROM pg_tables WHERE rowsecurity = true`
+- Review policy definitions
 
-## Configuration
+**Rate limit tests not blocking:**
+- Configure rate limiting in Supabase dashboard
+- Check edge function rate limits
+- Verify IP-based throttling
 
-Edit `playwright.config.ts` to customize:
-- Browser configurations
-- Viewport sizes
-- Test timeout
-- Reporter options
-- Base URL
+**2FA tests failing:**
+- Ensure admin users have 2FA enabled
+- Check `two_factor_enabled` column in `user_profiles`
+- Verify 2FA verification logic in edge functions
+
+## Manual Security Audit
+
+### Checklist
+- [ ] All tables have RLS enabled
+- [ ] Admin accounts have 2FA enabled
+- [ ] Rate limiting configured (100 req/min)
+- [ ] Environment variables in `.env` (not hardcoded)
+- [ ] HTTPS enforced in production
+- [ ] JWT tokens expire after 1 hour
+- [ ] Password requirements enforced (8+ chars, mixed case, numbers)
+- [ ] SQL injection protection (parameterized queries)
+- [ ] XSS protection (React escaping + DOMPurify)
+- [ ] CSRF protection (JWT tokens)
+
+## Security Audit Reports
+
+Reports are generated in JSON format:
+```json
+{
+  "timestamp": "2024-01-22T10:30:00Z",
+  "overallScore": 95,
+  "rlsTests": [...],
+  "rateLimitTests": [...],
+  "twoFactorTests": [...],
+  "penetrationTests": [...],
+  "recommendations": [...]
+}
+```
+
+### Viewing Reports
+```bash
+# Generate report
+npm run test:security:audit
+
+# View latest report
+cat security-audit-*.json | jq '.'
+```
+
+## Support
+For security issues, contact: security@gulfcoastcharters.com

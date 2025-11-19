@@ -1,74 +1,126 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/**
+ * Internationalization (i18n) Context
+ * 
+ * Provides multi-language support for the entire application with automatic
+ * browser language detection and persistent user preferences.
+ * 
+ * Supported Languages:
+ * - English (en) - Default
+ * - Spanish (es)
+ * - French (fr)
+ * - Portuguese (pt)
+ * 
+ * Features:
+ * - Automatic browser language detection
+ * - Persistent language preference (localStorage)
+ * - Currency management tied to language
+ * - Nested translation key support (e.g., 'nav.home')
+ * 
+ * Translation Libraries:
+ * @see https://react.i18next.com/ - Alternative i18n solution
+ * @see https://formatjs.io/docs/react-intl/ - React Intl library
+ * 
+ * Usage:
+ * ```tsx
+ * const { t, language, setLanguage } = useI18n();
+ * <h1>{t('welcome.title')}</h1>
+ * ```
+ */
 
-type Language = 'en' | 'es' | 'fr';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { en } from '@/translations/en';
+import { es } from '@/translations/es';
+import { fr } from '@/translations/fr';
+import { pt } from '@/translations/pt';
+
+// Supported language codes
+type Language = 'en' | 'es' | 'fr' | 'pt';
 
 interface I18nContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  currency: string;
+  setCurrency: (curr: string) => void;
 }
+
+// Translation objects for all supported languages
+const translations: Record<Language, any> = { en, es, fr, pt };
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
+/**
+ * Hook to access i18n context
+ * @throws Error if used outside I18nProvider
+ */
 export const useI18n = () => {
   const context = useContext(I18nContext);
   if (!context) throw new Error('useI18n must be used within I18nProvider');
   return context;
 };
 
+/**
+ * I18n Provider Component
+ * Wraps the app to provide translation and language management
+ */
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Initialize language with priority: localStorage > browser language > default (en)
   const [language, setLanguageState] = useState<Language>(() => {
+    // Check localStorage first
     const saved = localStorage.getItem('language');
-    return (saved as Language) || 'en';
+    if (saved && ['en', 'es', 'fr', 'pt'].includes(saved)) return saved as Language;
+    
+    // Detect browser language (e.g., 'en-US' -> 'en')
+    const browserLang = navigator.language.split('-')[0];
+    if (['en', 'es', 'fr', 'pt'].includes(browserLang)) return browserLang as Language;
+    
+    // Default to English
+    return 'en';
   });
 
+  // Initialize currency from localStorage or default to USD
+  const [currency, setCurrencyState] = useState<string>(() => {
+    return localStorage.getItem('currency') || 'USD';
+  });
+
+  /**
+   * Set language and persist to localStorage
+   */
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
   };
 
+  /**
+   * Set currency and persist to localStorage
+   */
+  const setCurrency = (curr: string) => {
+    setCurrencyState(curr);
+    localStorage.setItem('currency', curr);
+  };
+
+  /**
+   * Translation function - supports nested keys with dot notation
+   * @param key - Translation key (e.g., 'nav.home' or 'welcome.title')
+   * @returns Translated string or key if translation not found
+   */
   const t = (key: string) => {
     const keys = key.split('.');
     let value: any = translations[language];
+    
+    // Navigate through nested object
     for (const k of keys) {
       value = value?.[k];
     }
+    
+    // Return translation or original key if not found
     return value || key;
   };
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t }}>
+    <I18nContext.Provider value={{ language, setLanguage, t, currency, setCurrency }}>
       {children}
     </I18nContext.Provider>
   );
 };
 
-const translations: Record<Language, any> = {
-  en: {
-    nav: { home: 'Home', charters: 'Charters', destinations: 'Destinations', about: 'About', contact: 'Contact' },
-    hero: { title: 'Discover Your Perfect Charter Adventure', subtitle: 'Explore luxury yacht charters worldwide', cta: 'Explore Charters' },
-    search: { placeholder: 'Search destinations...', filter: 'Filter', sort: 'Sort by', price: 'Price', rating: 'Rating' },
-    charter: { perDay: 'per day', guests: 'guests', viewDetails: 'View Details', bookNow: 'Book Now' },
-    booking: { title: 'Book Your Charter', selectDates: 'Select Dates', guests: 'Number of Guests', total: 'Total', confirm: 'Confirm Booking' },
-    dashboard: { title: 'My Dashboard', bookings: 'My Bookings', profile: 'Profile', referrals: 'Referrals' },
-    footer: { rights: 'All rights reserved', company: 'Company', support: 'Support', legal: 'Legal' }
-  },
-  es: {
-    nav: { home: 'Inicio', charters: 'Charters', destinations: 'Destinos', about: 'Acerca de', contact: 'Contacto' },
-    hero: { title: 'Descubre Tu Aventura Charter Perfecta', subtitle: 'Explora charters de yates de lujo en todo el mundo', cta: 'Explorar Charters' },
-    search: { placeholder: 'Buscar destinos...', filter: 'Filtrar', sort: 'Ordenar por', price: 'Precio', rating: 'Calificación' },
-    charter: { perDay: 'por día', guests: 'huéspedes', viewDetails: 'Ver Detalles', bookNow: 'Reservar Ahora' },
-    booking: { title: 'Reserva Tu Charter', selectDates: 'Seleccionar Fechas', guests: 'Número de Huéspedes', total: 'Total', confirm: 'Confirmar Reserva' },
-    dashboard: { title: 'Mi Panel', bookings: 'Mis Reservas', profile: 'Perfil', referrals: 'Referencias' },
-    footer: { rights: 'Todos los derechos reservados', company: 'Empresa', support: 'Soporte', legal: 'Legal' }
-  },
-  fr: {
-    nav: { home: 'Accueil', charters: 'Charters', destinations: 'Destinations', about: 'À propos', contact: 'Contact' },
-    hero: { title: 'Découvrez Votre Aventure Charter Parfaite', subtitle: 'Explorez les charters de yachts de luxe dans le monde entier', cta: 'Explorer les Charters' },
-    search: { placeholder: 'Rechercher des destinations...', filter: 'Filtrer', sort: 'Trier par', price: 'Prix', rating: 'Évaluation' },
-    charter: { perDay: 'par jour', guests: 'invités', viewDetails: 'Voir Détails', bookNow: 'Réserver Maintenant' },
-    booking: { title: 'Réservez Votre Charter', selectDates: 'Sélectionner les Dates', guests: 'Nombre d\'Invités', total: 'Total', confirm: 'Confirmer la Réservation' },
-    dashboard: { title: 'Mon Tableau de Bord', bookings: 'Mes Réservations', profile: 'Profil', referrals: 'Parrainages' },
-    footer: { rights: 'Tous droits réservés', company: 'Entreprise', support: 'Assistance', legal: 'Juridique' }
-  }
-};

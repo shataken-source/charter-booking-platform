@@ -14,8 +14,10 @@ interface CharterGridProps {
     boatType: string;
     priceRange: string;
     sortBy: string;
+    hideWeatherAffected?: boolean;
   };
 }
+
 
 const CharterGrid = memo(function CharterGrid({ filters: externalFilters }: CharterGridProps) {
   const [isLoading, setIsLoading] = useState(false);

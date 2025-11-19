@@ -99,26 +99,60 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || fetchPromise;
 }
 
-// Push Notifications for Weather Alerts
+// Enhanced Push Notifications
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
-  const options = {
-    body: data.body || 'Weather alert notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    vibrate: [200, 100, 200],
-    tag: data.tag || 'weather-alert',
-    requireInteraction: data.severity === 'Extreme' || data.severity === 'Severe',
-    data: {
+  
+  const notificationTypes = {
+    'booking': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'booking-update',
+      url: '/customer/dashboard'
+    },
+    'weather': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'weather-alert',
       url: '/captain/mobile-dashboard?tab=weather',
-      ...data
+      requireInteraction: data.severity === 'Extreme' || data.severity === 'Severe'
+    },
+    'message': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'new-message',
+      url: '/messages'
+    },
+    'reminder': {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'reminder',
+      url: '/customer/dashboard'
     }
+  };
+
+  const type = data.type || 'booking';
+  const config = notificationTypes[type] || notificationTypes['booking'];
+  
+  const options = {
+    body: data.body || 'You have a new notification',
+    icon: config.icon,
+    badge: config.badge,
+    vibrate: [200, 100, 200],
+    tag: config.tag,
+    requireInteraction: config.requireInteraction || false,
+    data: {
+      url: data.url || config.url,
+      ...data
+    },
+    actions: data.actions || []
   };
   
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Weather Alert', options)
+    self.registration.showNotification(data.title || 'Gulf Coast Charters', options)
   );
 });
+
 
 // Notification Click Handler
 self.addEventListener('notificationclick', (event) => {

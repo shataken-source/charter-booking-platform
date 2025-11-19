@@ -8,6 +8,7 @@
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 221.2 83.2% 53.3%;
@@ -55,5 +56,50 @@
   
   .glass-effect {
     @apply bg-white/80 backdrop-blur-lg border border-white/20;
+  }
+  
+  /* Mobile PWA Optimizations */
+  .landscape-mode {
+    @apply overflow-x-hidden;
+  }
+  
+  .landscape-mode .hero-section {
+    @apply h-[60vh] md:h-[70vh];
+  }
+  
+  .landscape-mode .mobile-nav {
+    @apply flex-row justify-around py-2;
+  }
+  
+  .standalone-mode {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  
+  /* Safe area support for notched devices */
+  @supports (padding: max(0px)) {
+    .standalone-mode {
+      padding-top: max(env(safe-area-inset-top), 0px);
+      padding-bottom: max(env(safe-area-inset-bottom), 0px);
+    }
+  }
+  
+  /* Touch-friendly mobile interactions */
+  @media (hover: none) and (pointer: coarse) {
+    button, a, [role="button"] {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
+  
+  /* Landscape-specific grid layouts */
+  @media (orientation: landscape) and (max-height: 600px) {
+    .charter-grid {
+      @apply grid-cols-2 md:grid-cols-3 gap-3;
+    }
+    
+    .modal-content {
+      @apply max-h-[80vh] overflow-y-auto;
+    }
   }
 }

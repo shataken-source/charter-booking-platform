@@ -2,6 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { setupGlobalErrorHandler } from './utils/enterpriseErrorHandler';
+
+// Setup global error handling
+setupGlobalErrorHandler();
 
 const rootElement = document.getElementById("root");
 
@@ -14,3 +18,4 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>
 );
+

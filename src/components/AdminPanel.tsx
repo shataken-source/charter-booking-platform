@@ -787,19 +787,21 @@ export default function AdminPanel() {
             Manage Default Ads
           </Button>
         </div>
-
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Monetization Dashboard
+            <DollarSign className="w-4 h-4" />
+            Revenue & Commission System
           </h3>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <div className="flex items-start gap-3">
-              <TrendingUp className="w-5 h-5 text-green-600 mt-0.5" />
+              <DollarSign className="w-5 h-5 text-green-600 mt-0.5" />
               <div>
-                <p className="font-medium text-green-900">Revenue Analytics & Strategies</p>
+                <p className="font-medium text-green-900">Platform Monetization Dashboard</p>
                 <p className="text-sm text-green-700 mt-1">
-                  Track all 10 monetization strategies: premium listings, sponsored content, lead gen, memberships, commissions, affiliates, email marketing, banner ads, video ads, and corporate accounts
+                  Manage commission rates (12% platform fee), service fees (8% customer fee), premium captain subscriptions ($49-$149/mo), and featured listing purchases. Track all revenue streams with comprehensive analytics.
+                </p>
+                <p className="text-xs text-green-600 mt-2">
+                  Features: Revenue analytics, commission calculator, subscription plans, featured listing manager, payout tracking
                 </p>
               </div>
             </div>
@@ -809,9 +811,10 @@ export default function AdminPanel() {
             className="w-full"
             variant="default"
           >
-            View Monetization Dashboard
+            Open Monetization Dashboard
           </Button>
         </div>
+
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
@@ -867,6 +870,34 @@ export default function AdminPanel() {
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Backup Management System
+          </h3>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Database className="w-5 h-5 text-emerald-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-emerald-900">Automated Database Backups</p>
+                <p className="text-sm text-emerald-700 mt-1">
+                  Encrypted backups every 6 hours with point-in-time recovery, verification tests, and intelligent retention policies (7 days daily, 4 weeks weekly, 1 year monthly)
+                </p>
+                <p className="text-xs text-emerald-600 mt-2">
+                  Features: AES-256 encryption, health monitoring, restore interface, backup verification, automated cleanup
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/backups')} 
+            className="w-full"
+            variant="default"
+          >
+            Manage Database Backups
+          </Button>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
             <Download className="w-4 h-4" />
             Web Scraper & Bulk Loader
           </h3>
@@ -888,7 +919,38 @@ export default function AdminPanel() {
           >
             Open Web Scraper Dashboard
           </Button>
+
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            AI Chatbot Training & Analytics
+          </h3>
+          <div className="bg-sky-50 border border-sky-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <MessageSquare className="w-5 h-5 text-sky-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-sky-900">Manage AI Support Bot</p>
+                <p className="text-sm text-sky-700 mt-1">
+                  Review chatbot conversations, manage knowledge base Q&A pairs, view analytics on helpful responses, escalations, and common questions. Train the bot to improve over time.
+                </p>
+                <p className="text-xs text-sky-600 mt-2">
+                  Features: Conversation history, sentiment analysis, knowledge base management, satisfaction tracking, escalation monitoring
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => navigate('/admin/chatbot')} 
+            className="w-full"
+            variant="default"
+          >
+            Manage AI Chatbot
+          </Button>
         </div>
+
+        </div>
+
 
 
         </div>

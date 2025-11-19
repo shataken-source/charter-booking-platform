@@ -30,10 +30,20 @@ const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
 const AffiliateAnalytics = lazy(() => import("./pages/AffiliateAnalytics"));
+const AffiliateProgram = lazy(() => import("./pages/AffiliateProgram"));
+const AdminFraudDetection = lazy(() => import("./pages/AdminFraudDetection"));
+
+
 const AdminMobileDashboard = lazy(() => import("./pages/AdminMobileDashboard"));
 const MobileCaptainDashboard = lazy(() => import("./pages/MobileCaptainDashboard"));
 const MembershipAdminPage = lazy(() => import("./components/admin/MembershipAdmin"));
 const AdminScraperDashboard = lazy(() => import("./pages/AdminScraperDashboard"));
+const ChatbotAdmin = lazy(() => import("./components/admin/ChatbotAdmin"));
+const BackupManagement = lazy(() => import("./components/admin/BackupManagement"));
+const AdminMonetization = lazy(() => import("./pages/AdminMonetization"));
+
+
+
 
 
 
@@ -42,7 +52,11 @@ const AdminCaptainReview = lazy(() => import("./pages/AdminCaptainReview"));
 const PromotionsPage = lazy(() => import("./components/PromotionsPage"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
+const DeveloperOnboarding = lazy(() => import("./pages/DeveloperOnboarding"));
+const ComponentShowcase = lazy(() => import("./pages/ComponentShowcase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+
 
 
 
@@ -85,6 +99,20 @@ const App = () => (
                         <Route path="/admin/memberships" element={<MembershipAdminPage />} />
                         <Route path="/admin/scraper" element={<AdminScraperDashboard />} />
                         <Route path="/admin/mobile" element={<AdminMobileDashboard />} />
+                        <Route path="/admin/chatbot" element={<ChatbotAdmin />} />
+                        <Route path="/admin/backups" element={<BackupManagement />} />
+                        <Route path="/admin/monetization" element={<AdminMonetization />} />
+                        <Route path="/admin/fraud-detection" element={<AdminFraudDetection />} />
+                        <Route path="/affiliate-program" element={<AffiliateProgram />} />
+                        <Route path="/developer-onboarding" element={<DeveloperOnboarding />} />
+                        <Route path="/components-showcase" element={<ComponentShowcase />} />
+
+
+
+
+
+
+
 
 
                         <Route path="/captain/mobile-dashboard" element={<MobileCaptainDashboard />} />

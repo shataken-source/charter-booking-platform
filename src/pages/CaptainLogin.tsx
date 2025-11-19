@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CaptainLoginComponent from '@/components/CaptainLogin';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 
 export default function CaptainLoginPage() {
   const navigate = useNavigate();

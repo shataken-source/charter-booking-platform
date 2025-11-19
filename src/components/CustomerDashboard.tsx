@@ -1,33 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, List, User, Gift, Trophy } from 'lucide-react';
-import LoyaltyRewardsDashboard from './LoyaltyRewardsDashboard';
-import AchievementBadges from './AchievementBadges';
-import TopReviewersLeaderboard from './TopReviewersLeaderboard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Clock, MapPin, DollarSign, Star, User, Bell, Settings } from 'lucide-react';
 import BookingHistoryCard from './BookingHistoryCard';
 import ProfileSettings from './ProfileSettings';
-import ReviewForm from './ReviewForm';
-import ReferralDashboard from './ReferralDashboard';
-import CustomEmailPurchase from './CustomEmailPurchase';
-import { Calendar } from '@/components/ui/calendar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PaymentHistory from './PaymentHistory';
+import { LoyaltyRewardsDashboard } from './LoyaltyRewardsDashboard';
+import { ReferralDashboard } from './ReferralDashboard';
+import { TripPhotoGallery } from './TripPhotoGallery';
+import { TripPlanner } from './TripPlanner';
+import DealAlertPreferences from './DealAlertPreferences';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 
 
-export default function CustomerDashboard() {
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState('');
-  const [userId, setUserId] = useState('');
-  const [userPoints, setUserPoints] = useState(0);
-  const { toast } = useToast();
 
 
 

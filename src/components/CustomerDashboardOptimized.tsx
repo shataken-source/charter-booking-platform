@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import EnhancedMessenger from './EnhancedMessenger';
 import { EmptyState } from './ui/empty-state';
 import BookingCardMemo from './optimized/BookingCardMemo';
-import { SEO } from './SEO';
+import SEO from './SEO';
 import { toast } from 'sonner';
 
 interface Booking {
