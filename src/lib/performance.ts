@@ -1,27 +1,18 @@
-// Simple performance monitoring without external dependencies
-export function initPerformanceMonitoring() {
-  if (typeof window === 'undefined') return;
-  
-  // Use native Performance API
-  if ('PerformanceObserver' in window) {
-    try {
-      // Monitor Largest Contentful Paint
-      const lcpObserver = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1];
-        // LCP tracked
-      });
-      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+export const measurePerformance = (name: string, fn: () => unknown) => {
+  const start = performance.now();
+  const result = fn();
+  const end = performance.now();
+  console.log(`${name} took ${end - start}ms`);
+  return result;
+};
 
-      const fidObserver = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry: PerformanceEntry) => {
-
-          // FID tracked
-        });
-      });
-      fidObserver.observe({ entryTypes: ['first-input'] });
-    } catch (e) {
-      // Performance monitoring not supported
-    }
-  }
-}
+export const debounce = <T extends (...args: unknown[]) => unknown>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};

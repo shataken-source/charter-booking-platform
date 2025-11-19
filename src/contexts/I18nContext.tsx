@@ -105,18 +105,22 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * @param key - Translation key (e.g., 'nav.home' or 'welcome.title')
    * @returns Translated string or key if translation not found
    */
-  const t = (key: string) => {
+  const t = (key: string): string => {
     const keys = key.split('.');
-    let value: Record<string, unknown> | unknown = translations[language];
+    let value: Record<string, unknown> | string = translations[language] as Record<string, unknown>;
 
     
     // Navigate through nested object
     for (const k of keys) {
-      value = value?.[k];
+      if (typeof value === 'object' && value !== null && k in value) {
+        value = value[k] as Record<string, unknown> | string;
+      } else {
+        return key;
+      }
     }
     
     // Return translation or original key if not found
-    return value || key;
+    return typeof value === 'string' ? value : key;
   };
 
   return (
