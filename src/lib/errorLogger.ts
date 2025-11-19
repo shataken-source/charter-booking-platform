@@ -2,7 +2,8 @@ export interface ErrorContext {
   component?: string;
   action?: string;
   userId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
+
 }
 
 export const logError = (error: Error, context?: ErrorContext) => {

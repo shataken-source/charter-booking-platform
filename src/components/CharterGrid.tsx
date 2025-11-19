@@ -75,7 +75,8 @@ const CharterGrid = memo(function CharterGrid({ filters: externalFilters }: Char
               Available Charters ({filteredCharters.length})
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div data-testid="charter-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
             {isLoading ? (
               [...Array(6)].map((_, i) => <CharterCardSkeleton key={i} />)
             ) : (

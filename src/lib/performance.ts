@@ -14,7 +14,8 @@ export function initPerformanceMonitoring() {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
       const fidObserver = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry: any) => {
+        list.getEntries().forEach((entry: PerformanceEntry) => {
+
           // FID tracked
         });
       });

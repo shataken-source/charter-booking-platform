@@ -45,7 +45,8 @@ interface I18nContextType {
 }
 
 // Translation objects for all supported languages
-const translations: Record<Language, any> = { en, es, fr, pt };
+const translations: Record<Language, Record<string, unknown>> = { en, es, fr, pt };
+
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
@@ -106,7 +107,8 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
   const t = (key: string) => {
     const keys = key.split('.');
-    let value: any = translations[language];
+    let value: Record<string, unknown> | unknown = translations[language];
+
     
     // Navigate through nested object
     for (const k of keys) {

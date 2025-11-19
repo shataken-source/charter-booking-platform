@@ -29,7 +29,8 @@ export function useOfflineBooking() {
     }
   };
 
-  const createBooking = async (bookingData: any) => {
+  const createBooking = async (bookingData: Record<string, unknown>) => {
+
     if (isOnline) {
       // Online: send directly
       return await sendBooking(bookingData);
@@ -41,7 +42,8 @@ export function useOfflineBooking() {
     }
   };
 
-  const sendBooking = async (data: any) => {
+  const sendBooking = async (data: Record<string, unknown>) => {
+
     const response = await fetch('/functions/v1/booking-manager', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

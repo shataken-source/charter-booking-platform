@@ -52,7 +52,8 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (booking: any) => {
+    mutationFn: async (booking: Record<string, unknown>) => {
+
       const { data, error } = await supabase
         .from('bookings')
         .insert(booking)

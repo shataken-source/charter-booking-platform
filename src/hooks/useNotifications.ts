@@ -10,7 +10,8 @@ export interface Notification {
   message: string;
   link?: string;
   read: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
+
   created_at: string;
   read_at?: string;
 }

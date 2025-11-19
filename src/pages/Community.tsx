@@ -29,7 +29,8 @@ export default function Community() {
   const { toast } = useToast();
   const [showAvatarCustomizer, setShowAvatarCustomizer] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
-  const [avatarData, setAvatarData] = useState<any>(null);
+  const [avatarData, setAvatarData] = useState<Record<string, unknown> | null>(null);
+
   const [equippedItems, setEquippedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 

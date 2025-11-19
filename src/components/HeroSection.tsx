@@ -8,7 +8,8 @@ interface HeroSectionProps {
 
 const HeroSection = memo(function HeroSection({ onFilterChange }: HeroSectionProps) {
   return (
-    <div className="relative h-[600px] bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-900 overflow-hidden">
+    <div data-testid="hero-section" className="relative h-[600px] bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-900 overflow-hidden">
+
       <div className="absolute inset-0 bg-[url('https://d64gsuwffb70l.cloudfront.net/6918960e54362d714f32b6fc_1763224544784_6539f327.webp')] bg-cover bg-center opacity-20"></div>
       
       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 to-transparent"></div>

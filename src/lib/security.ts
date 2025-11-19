@@ -35,14 +35,15 @@ export function validateCsrfToken(token: string, storedToken: string): boolean {
  * Secure session storage (in-memory for sensitive data)
  */
 class SecureStorage {
-  private storage = new Map<string, any>();
+  private storage = new Map<string, unknown>();
   
-  set(key: string, value: any): void {
+  set(key: string, value: unknown): void {
     this.storage.set(key, value);
   }
   
-  get(key: string): any {
+  get(key: string): unknown {
     return this.storage.get(key);
+
   }
   
   remove(key: string): void {

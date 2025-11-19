@@ -59,7 +59,8 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
 
   return (
     <>
-      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 ${props.isFeatured ? 'ring-2 ring-purple-500' : ''}`}>
+      <div data-testid="charter-card" className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 ${props.isFeatured ? 'ring-2 ring-purple-500' : ''}`}>
+
         {props.isFeatured && (
           <div className="gradient-primary text-white text-xs font-bold px-3 py-1.5 text-center">
             FEATURED

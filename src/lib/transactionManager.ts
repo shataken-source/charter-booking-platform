@@ -39,7 +39,8 @@ export class TransactionManager {
 export async function optimisticBooking(
   captainId: string,
   date: string,
-  bookingData: any
+  bookingData: Record<string, unknown>
+
 ) {
   const transaction = new TransactionManager();
 
