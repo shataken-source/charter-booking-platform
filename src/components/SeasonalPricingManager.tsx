@@ -1,121 +1,186 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, DollarSign, Plus, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar';
+import { Trash2, Plus } from 'lucide-react';
 
-interface PricingRule {
+interface SeasonalPrice {
   id: string;
-  seasonName: string;
-  startDate: string;
-  endDate: string;
-  multiplier: number;
-  fixedPrice?: number;
+  season_name: string;
+  start_date: string;
+  end_date: string;
+  price_multiplier: number;
+  custom_price?: number;
+  active: boolean;
 }
 
 export default function SeasonalPricingManager({ captainId }: { captainId: string }) {
-  const [rules, setRules] = useState<PricingRule[]>([]);
-  const [newRule, setNewRule] = useState({
-    seasonName: '',
-    startDate: '',
-    endDate: '',
-    multiplier: 1.0,
-    fixedPrice: ''
-  });
+  const [seasons, setSeasons] = useState<SeasonalPrice[]>([]);
+  const [seasonName, setSeasonName] = useState('');
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [multiplier, setMultiplier] = useState('1.5');
+  const [loading, setLoading] = useState(false);
 
-  const addRule = () => {
-    if (!newRule.seasonName || !newRule.startDate || !newRule.endDate) {
+  useEffect(() => {
+    loadSeasons();
+  }, [captainId]);
+
+  const loadSeasons = async () => {
+    try {
+      const { data } = await supabase
+        .from('seasonal_pricing')
+        .select('*')
+        .eq('captain_id', captainId)
+        .order('start_date');
+
+      if (data) setSeasons(data);
+    } catch (error) {
+      console.error('Error loading seasons:', error);
+    }
+  };
+
+  const addSeason = async () => {
+    if (!seasonName || !startDate || !endDate) {
       toast.error('Please fill all fields');
       return;
     }
 
-    const rule: PricingRule = {
-      id: Date.now().toString(),
-      seasonName: newRule.seasonName,
-      startDate: newRule.startDate,
-      endDate: newRule.endDate,
-      multiplier: newRule.multiplier,
-      fixedPrice: newRule.fixedPrice ? parseFloat(newRule.fixedPrice) : undefined
-    };
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('availability-manager', {
+        body: {
+          action: 'addSeasonalPricing',
+          captainId,
+          seasonName,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          priceMultiplier: parseFloat(multiplier)
+        }
+      });
 
-    setRules([...rules, rule]);
-    setNewRule({ seasonName: '', startDate: '', endDate: '', multiplier: 1.0, fixedPrice: '' });
-    toast.success('Pricing rule added');
+      if (error) throw error;
+      
+      toast.success('Seasonal pricing added');
+      setSeasonName('');
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setMultiplier('1.5');
+      loadSeasons();
+    } catch (error: any) {
+      toast.error('Failed to add seasonal pricing');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeRule = (id: string) => {
-    setRules(rules.filter(r => r.id !== id));
-    toast.success('Pricing rule removed');
+  const removeSeason = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('seasonal_pricing')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Season removed');
+      loadSeasons();
+    } catch (error) {
+      toast.error('Failed to remove season');
+    }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Seasonal Pricing Rules
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Seasonal Pricing</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
             <Label>Season Name</Label>
             <Input
-              placeholder="e.g., Summer Peak"
-              value={newRule.seasonName}
-              onChange={(e) => setNewRule({ ...newRule, seasonName: e.target.value })}
+              placeholder="e.g., Summer Peak, Holiday Season"
+              value={seasonName}
+              onChange={(e) => setSeasonName(e.target.value)}
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Start Date</Label>
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                className="rounded-md border"
+              />
+            </div>
+            <div>
+              <Label>End Date</Label>
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                className="rounded-md border"
+              />
+            </div>
+          </div>
+
           <div>
-            <Label>Price Multiplier</Label>
+            <Label>Price Multiplier (e.g., 1.5 = 50% increase)</Label>
             <Input
               type="number"
               step="0.1"
-              value={newRule.multiplier}
-              onChange={(e) => setNewRule({ ...newRule, multiplier: parseFloat(e.target.value) })}
+              value={multiplier}
+              onChange={(e) => setMultiplier(e.target.value)}
             />
           </div>
-          <div>
-            <Label>Start Date</Label>
-            <Input
-              type="date"
-              value={newRule.startDate}
-              onChange={(e) => setNewRule({ ...newRule, startDate: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label>End Date</Label>
-            <Input
-              type="date"
-              value={newRule.endDate}
-              onChange={(e) => setNewRule({ ...newRule, endDate: e.target.value })}
-            />
-          </div>
-        </div>
 
-        <Button onClick={addRule} className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Pricing Rule
-        </Button>
+          <Button onClick={addSeason} disabled={loading} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Seasonal Pricing
+          </Button>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-2">
-          {rules.map(rule => (
-            <div key={rule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-              <div>
-                <p className="font-semibold">{rule.seasonName}</p>
-                <p className="text-sm text-gray-600">
-                  {rule.startDate} to {rule.endDate} • {rule.multiplier}x price
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => removeRule(rule.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Seasonal Pricing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {seasons.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No seasonal pricing configured</p>
+            ) : (
+              seasons.map((season) => (
+                <div key={season.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-semibold">{season.season_name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(season.start_date).toLocaleDateString()} - {new Date(season.end_date).toLocaleDateString()}
+                    </div>
+                    <Badge variant="secondary" className="mt-1">
+                      {season.price_multiplier}x multiplier
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSeason(season.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
