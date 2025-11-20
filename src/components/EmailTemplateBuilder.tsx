@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
 import { sanitizeHtml } from '@/lib/security';
 
-export default function EmailTemplateBuilder() {
-
+interface EmailBlock {
+  id: string;
+  type: 'header' | 'text' | 'image' | 'button' | 'divider';
   content: string;
   styles?: Record<string, string>;
 }
@@ -21,7 +21,6 @@ const EmailTemplateBuilder: React.FC<EmailTemplateBuilderProps> = ({ onSave }) =
   const [blocks, setBlocks] = useState<EmailBlock[]>([]);
   const [subject, setSubject] = useState('');
   const [previewText, setPreviewText] = useState('');
-  const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
 
   const addBlock = (type: EmailBlock['type']) => {
     const newBlock: EmailBlock = {
@@ -62,9 +61,7 @@ const EmailTemplateBuilder: React.FC<EmailTemplateBuilderProps> = ({ onSave }) =
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Add Blocks</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Add Blocks</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           <Button onClick={() => addBlock('header')} className="w-full" variant="outline">+ Header</Button>
           <Button onClick={() => addBlock('text')} className="w-full" variant="outline">+ Text</Button>
@@ -73,11 +70,8 @@ const EmailTemplateBuilder: React.FC<EmailTemplateBuilderProps> = ({ onSave }) =
           <Button onClick={() => addBlock('divider')} className="w-full" variant="outline">+ Divider</Button>
         </CardContent>
       </Card>
-
       <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Email Builder</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Email Builder</CardTitle></CardHeader>
         <CardContent>
           <Tabs defaultValue="build">
             <TabsList className="grid w-full grid-cols-2">
@@ -106,7 +100,6 @@ const EmailTemplateBuilder: React.FC<EmailTemplateBuilderProps> = ({ onSave }) =
             </TabsContent>
             <TabsContent value="preview">
               <div className="border rounded-lg p-4 bg-gray-50" dangerouslySetInnerHTML={{ __html: sanitizeHtml(generateHTML()) }} />
-
             </TabsContent>
           </Tabs>
         </CardContent>

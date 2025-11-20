@@ -105,13 +105,18 @@ let state: Omit<AppState, 'toggleSidebar' | 'addReview' | 'getReviewsByCharter' 
 try {
   const stored = localStorage.getItem('app-storage');
   if (stored) state = JSON.parse(stored).state || state;
-} catch (e) {}
+} catch (error) {
+  console.error('Failed to load app state from localStorage:', error);
+}
+
 
 const setState = (newState: Partial<typeof state>) => {
   state = { ...state, ...newState };
   try {
     localStorage.setItem('app-storage', JSON.stringify({ state }));
-  } catch (e) {}
+  } catch (error) {
+    console.error('Failed to save app state to localStorage:', error);
+  }
   listeners.forEach(l => l());
 };
 

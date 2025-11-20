@@ -44,15 +44,21 @@ let state: Omit<I18nState, 'setLanguage' | 't'> = { language: 'en' };
 try {
   const stored = localStorage.getItem('i18n-storage');
   if (stored) state = JSON.parse(stored).state || state;
-} catch (e) {}
+} catch (error) {
+  console.error('Failed to load i18n state from localStorage:', error);
+}
+
 
 const setState = (newState: Partial<typeof state>) => {
   state = { ...state, ...newState };
   try {
     localStorage.setItem('i18n-storage', JSON.stringify({ state }));
-  } catch (e) {}
+  } catch (error) {
+    console.error('Failed to save i18n state to localStorage:', error);
+  }
   listeners.forEach(l => l());
 };
+
 
 export const useI18nStore = <T>(selector: (state: I18nState) => T): T => {
   const [, forceUpdate] = useState({});

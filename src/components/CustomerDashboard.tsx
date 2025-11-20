@@ -2,26 +2,35 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, MapPin, DollarSign, Star, User, Bell, Settings } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { List, Trophy, Calendar as CalendarIcon, Gift, User } from 'lucide-react';
 import BookingHistoryCard from './BookingHistoryCard';
 import ProfileSettings from './ProfileSettings';
-import PaymentHistory from './PaymentHistory';
 import { LoyaltyRewardsDashboard } from './LoyaltyRewardsDashboard';
 import { ReferralDashboard } from './ReferralDashboard';
-import { TripPhotoGallery } from './TripPhotoGallery';
-import { TripPlanner } from './TripPlanner';
-import DealAlertPreferences from './DealAlertPreferences';
+import CustomEmailPurchase from './CustomEmailPurchase';
+import ReviewForm from './ReviewForm';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
 
-
-
-
+export default function CustomerDashboard() {
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState('');
+  const [userPoints, setUserPoints] = useState(0);
+  const [date, setDate] = useState<Date>();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchBookings();
   }, []);
+
 
   const fetchBookings = async () => {
     try {
@@ -114,12 +123,9 @@ import SEO from '@/components/SEO';
           </TabsList>
 
           <TabsContent value="rewards" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <LoyaltyRewardsDashboard userId={userEmail} />
-              <TopReviewersLeaderboard />
-            </div>
-            <AchievementBadges userId={userEmail} />
+            <LoyaltyRewardsDashboard userId={userEmail} />
           </TabsContent>
+
 
 
 
@@ -150,9 +156,10 @@ import SEO from '@/components/SEO';
 
           <TabsContent value="calendar">
             <div className="bg-white p-6 rounded-lg shadow">
-              <Calendar mode="single" selected={date} onSelect={setDate} className="mx-auto" />
+              <CalendarComponent mode="single" selected={date} onSelect={setDate} className="mx-auto" />
             </div>
           </TabsContent>
+
 
           <TabsContent value="referrals">
             <ReferralDashboard userEmail={userEmail} />

@@ -28,15 +28,21 @@ try {
     const parsed = JSON.parse(stored);
     state = parsed.state || state;
   }
-} catch (e) {}
+} catch (error) {
+  console.error('Failed to load user state from localStorage:', error);
+}
+
 
 const setState = (newState: Partial<typeof state>) => {
   state = { ...state, ...newState };
   try {
     localStorage.setItem('user-storage', JSON.stringify({ state }));
-  } catch (e) {}
+  } catch (error) {
+    console.error('Failed to save user state to localStorage:', error);
+  }
   listeners.forEach(listener => listener());
 };
+
 
 export const useUserStore = <T>(selector: (state: UserState) => T): T => {
   const [, forceUpdate] = useState({});
