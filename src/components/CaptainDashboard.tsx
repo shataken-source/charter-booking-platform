@@ -507,3 +507,5 @@ export default function CaptainDashboard() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}

@@ -262,6 +262,9 @@ export default function CustomEmailPurchase({
         emailAddress={`${customEmailPrefix}@gulfcoastcharters.com`}
         amount={CASH_COST}
         onSuccess={handleStripeSuccess}
+
       />
     </>
   );
+}
+
