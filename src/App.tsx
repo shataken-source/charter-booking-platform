@@ -28,6 +28,10 @@ const CaptainLogin = lazy(() => import("./pages/CaptainLogin"));
 const LocationLanding = lazy(() => import("./pages/LocationLanding"));
 const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+
+
 const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
 const AffiliateAnalytics = lazy(() => import("./pages/AffiliateAnalytics"));
 const AffiliateProgram = lazy(() => import("./pages/AffiliateProgram"));
@@ -95,6 +99,10 @@ const App = () => (
                         <Route path="/location/:location" element={<LocationLanding />} />
                         <Route path="/admin/marine-products" element={<MarineProductsAdmin />} />
                         <Route path="/payment-success" element={<PaymentSuccess />} />
+                        <Route path="/payment-history" element={<PaymentHistory />} />
+                        <Route path="/favorites" element={<Favorites />} />
+
+
                         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
                         <Route path="/admin/affiliate-analytics" element={<AffiliateAnalytics />} />
                         <Route path="/admin/captain-review" element={<AdminCaptainReview />} />

@@ -10,10 +10,10 @@ import { useAppContext } from '@/contexts/AppContext';
 
 interface CharterGridProps {
   filters?: {
-    location: string;
-    boatType: string;
-    priceRange: string;
-    sortBy: string;
+    location?: string;
+    boatType?: string;
+    priceRange?: string;
+    sortBy?: string;
     hideWeatherAffected?: boolean;
   };
 }
@@ -45,26 +45,27 @@ const CharterGrid = memo(function CharterGrid({ filters: externalFilters }: Char
     if (filters.priceRange) {
       const [min, max] = filters.priceRange.split('-').map(v => v.replace('+', ''));
       result = result.filter(c => {
+        const price = c.priceFullDay || 0;
         if (max) {
-          return c.priceFullDay >= Number(min) && c.priceFullDay <= Number(max);
+          return price >= Number(min) && price <= Number(max);
         }
-        return c.priceFullDay >= Number(min);
+        return price >= Number(min);
       });
     }
 
     // Sort
     if (filters.sortBy === 'rating') {
-      result.sort((a, b) => b.rating - a.rating);
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (filters.sortBy === 'price-low') {
-      result.sort((a, b) => a.priceFullDay - b.priceFullDay);
+      result.sort((a, b) => (a.priceFullDay || 0) - (b.priceFullDay || 0));
     } else if (filters.sortBy === 'price-high') {
-      result.sort((a, b) => b.priceFullDay - a.priceFullDay);
+      result.sort((a, b) => (b.priceFullDay || 0) - (a.priceFullDay || 0));
     } else if (filters.sortBy === 'reviews') {
-      result.sort((a, b) => b.reviewCount - a.reviewCount);
+      result.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
     }
 
     return result;
-  }, [filters]);
+  }, [filters, charters]);
 
   return (
     <div className="container mx-auto px-4 py-8">

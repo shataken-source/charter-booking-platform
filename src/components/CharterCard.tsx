@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GitCompare, Award, User } from 'lucide-react';
+import { GitCompare, Award, User, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAppContext } from '@/contexts/AppContext';
 import SocialShare from './SocialShare';
@@ -8,6 +8,12 @@ import OptimizedImage from './OptimizedImage';
 import ClaimListingModal from './ClaimListingModal';
 import CaptainVerificationBadges from './CaptainVerificationBadges';
 import CompleteBookingFlow from './booking/CompleteBookingFlow';
+import EnhancedBookingModal from './booking/EnhancedBookingModal';
+import { FavoriteButton } from './FavoriteButton';
+import { WaitlistModal } from './WaitlistModal';
+import { useUserContext } from '@/contexts/UserContext';
+
+
 
 import CaptainWeatherBadge from './CaptainWeatherBadge';
 
@@ -23,11 +29,11 @@ interface CharterCardProps {
   boatType: string;
   boatLength: number;
   maxPassengers: number;
-  priceHalfDay: number;
-  priceFullDay: number;
+  priceHalfDay?: number;
+  priceFullDay?: number;
   rating: number;
-  reviewCount: number;
-  image: string;
+  reviewCount?: number;
+  image?: string;
   isFeatured?: boolean;
   isScraped?: boolean;
   isClaimed?: boolean;
@@ -40,8 +46,11 @@ interface CharterCardProps {
 const CharterCard = memo(function CharterCard(props: CharterCardProps) {
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const { addToCompare, compareCharters } = useAppContext();
+  const { user } = useUserContext();
   const isInCompare = compareCharters.includes(props.id);
+
 
 
   const handleViewDetails = () => {
@@ -80,13 +89,23 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
         )}
 
 
-        <div className="relative h-48 overflow-hidden">
-          <OptimizedImage 
-            src={props.image} 
-            alt={props.businessName}
-            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-          />
+        <div className="relative h-48 overflow-hidden bg-gray-200">
+          <div className="absolute top-2 right-2 z-10">
+            <FavoriteButton charterId={props.id} userId={user?.id} />
+          </div>
+          {props.image ? (
+            <OptimizedImage 
+              src={props.image} 
+              alt={props.businessName}
+              className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              No Image
+            </div>
+          )}
         </div>
+
 
         <div className="p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-1">{props.businessName}</h3>
@@ -179,18 +198,35 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
             />
           </div>
 
-          <div className="flex gap-3 mb-3">
+          <div className="flex gap-2 mb-3">
             <button
               onClick={() => setShowBookingModal(true)}
               className="flex-1 bg-green-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-green-700 shadow-md"
             >
               Book Now
             </button>
+            {props.captainId && (
+              <Link
+                to={`/messages?captain=${props.captainId}`}
+                className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-blue-700 shadow-md"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Link>
+            )}
+          </div>
+
+          <div className="flex gap-3">
             <button
               onClick={handleViewDetails}
               className="flex-1 gradient-primary text-white py-2.5 px-4 rounded-xl transition font-semibold hover:opacity-90 shadow-md"
             >
               Details
+            </button>
+            <button
+              onClick={() => setShowWaitlistModal(true)}
+              className="flex-1 bg-amber-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-amber-700 shadow-md text-sm"
+            >
+              Join Waitlist
             </button>
           </div>
 
@@ -204,12 +240,25 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
         listingName={props.businessName}
       />
       
-      <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <CompleteBookingFlow charter={{...props, title: props.businessName, price: props.priceFullDay, capacity: props.maxPassengers}} onClose={() => setShowBookingModal(false)} />
+      <EnhancedBookingModal
+        charter={{
+          id: props.id,
+          name: props.businessName,
+          priceHalfDay: props.priceHalfDay || 0,
+          priceFullDay: props.priceFullDay || 0
+        }}
+        open={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+      />
 
-        </DialogContent>
-      </Dialog>
+      <WaitlistModal
+        isOpen={showWaitlistModal}
+        onClose={() => setShowWaitlistModal(false)}
+        charterId={props.id}
+        charterName={props.businessName}
+        userId={user?.id}
+      />
+
     </>
 
   );
@@ -217,4 +266,3 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
 });
 
 export default CharterCard;
-

@@ -13,7 +13,13 @@ const Index: React.FC = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const referralCode = searchParams.get('ref');
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({
+    location: '',
+    boatType: '',
+    priceRange: '',
+    sortBy: 'rating',
+    hideWeatherAffected: false,
+  });
 
   const metaTags = referralCode 
     ? generateReferralMetaTags(referralCode)
