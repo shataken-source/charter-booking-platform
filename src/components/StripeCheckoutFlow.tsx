@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,7 @@ export default function StripeCheckoutFlow({ bookingData, onSuccess }: CheckoutF
   const [clientSecret, setClientSecret] = useState<string>('');
   const { toast } = useToast();
 
-  useState(() => {
+  useEffect(() => {
     const initPayment = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -78,7 +78,7 @@ export default function StripeCheckoutFlow({ bookingData, onSuccess }: CheckoutF
       }
     };
     initPayment();
-  });
+  }, [bookingData, toast]);
 
   if (!clientSecret) return <div>Loading payment...</div>;
 
