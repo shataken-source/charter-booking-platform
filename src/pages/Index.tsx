@@ -8,9 +8,11 @@ import SmartSearchBar from '@/components/personalization/SmartSearchBar';
 import UserInterestsManager from '@/components/personalization/UserInterestsManager';
 import FeaturesSection from '@/components/FeaturesSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
+import CharterGrid from '@/components/CharterGrid';
 import { generateReferralMetaTags, generateReferralStructuredData } from '@/utils/referralMetaTags';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
+
 
 const Index: React.FC = () => {
   const location = useLocation();

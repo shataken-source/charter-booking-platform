@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MarineProduct } from '@/types/marineProduct';
-import MarineProductCardEnhanced from '@/components/MarineProductCardEnhanced';
+import MarineProductCard from '@/components/MarineProductCard';
+
 
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
@@ -65,13 +66,12 @@ export function ProductRecommendations({ currentProductId, allProducts, userId }
       <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recommendations.map(product => (
-          <MarineProductCardEnhanced 
+          <MarineProductCard 
             key={product.id} 
             product={product}
-            onQuickView={() => {}}
-            onAddToCart={() => {}}
           />
         ))}
+
       </div>
     </div>
   );

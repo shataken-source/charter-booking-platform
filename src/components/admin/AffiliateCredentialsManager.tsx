@@ -39,7 +39,18 @@ const retailerInfo = {
     url: 'https://www.boatus.com/',
     fields: ['Affiliate ID'],
   },
+  paypal: {
+    name: 'PayPal Partner',
+    url: 'https://www.paypal.com/us/webapps/mpp/partner-program',
+    fields: ['Client ID', 'Secret Key'],
+  },
+  venmo: {
+    name: 'Venmo Business',
+    url: 'https://venmo.com/business/',
+    fields: ['Business Profile ID'],
+  },
 };
+
 
 export default function AffiliateCredentialsManager() {
   const [credentials, setCredentials] = useState<AffiliateCredential[]>([]);
@@ -157,6 +168,23 @@ export default function AffiliateCredentialsManager() {
                 </div>
               )}
 
+              {cred.retailer === 'paypal' && (
+                <div>
+                  <Label>Secret Key</Label>
+                  <Input
+                    type={showSecrets[cred.retailer] ? 'text' : 'password'}
+                    value={cred.secret_key || ''}
+                    placeholder="PayPal Secret Key"
+                    onChange={(e) => 
+                      setCredentials(prev => 
+                        prev.map(c => c.id === cred.id ? { ...c, secret_key: e.target.value } : c)
+                      )
+                    }
+                  />
+                </div>
+              )}
+
+
               <div>
                 <Label>Commission Rate (%)</Label>
                 <Input
@@ -175,6 +203,7 @@ export default function AffiliateCredentialsManager() {
                 onClick={() => updateCredential(cred.id, {
                   affiliate_id: cred.affiliate_id,
                   api_key: cred.api_key,
+                  secret_key: cred.secret_key,
                   commission_rate: cred.commission_rate,
                 })}
                 className="w-full"
@@ -182,6 +211,7 @@ export default function AffiliateCredentialsManager() {
                 <Save className="w-4 h-4 mr-2" />
                 Save {info.name} Settings
               </Button>
+
             </CardContent>
           </Card>
         );

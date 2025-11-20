@@ -4,12 +4,14 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role?: string;
   level?: number;
   profilePicture?: string;
   provider?: string;
   phoneNumber?: string;
   avatar?: string;
 }
+
 
 interface UserContextType {
   user: User | null;
