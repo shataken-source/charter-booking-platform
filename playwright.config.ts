@@ -13,10 +13,11 @@ export default defineConfig({
   maxFailures: process.env.CI ? 10 : undefined,
   
   // Timeout settings
-  timeout: 30 * 1000, // 30 seconds per test
+  timeout: 90 * 1000, // 90 seconds per test (increased for CI)
   expect: {
-    timeout: 5000, // 5 seconds for assertions
+    timeout: 30000, // 30 seconds for assertions (increased for CI)
   },
+
   
   reporter: [
     ['html'],
