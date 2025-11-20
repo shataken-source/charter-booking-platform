@@ -10,6 +10,11 @@ import AccommodationSelector from './trip/AccommodationSelector';
 import FishingSpotPlanner from './trip/FishingSpotPlanner';
 import PackingListManager from './trip/PackingListManager';
 import CompanionInviter from './trip/CompanionInviter';
+import TripWeatherForecast from './trip/TripWeatherForecast';
+import HourlyWeatherDisplay from './trip/HourlyWeatherDisplay';
+import WeatherAlertNotifier from './trip/WeatherAlertNotifier';
+
+
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Ship, Calendar as CalendarIcon, Save } from 'lucide-react';
@@ -22,13 +27,17 @@ export default function MultiDayTripPlanner() {
     captain_id: '',
     start_date: new Date(),
     end_date: new Date(),
-    total_days: 0
+    total_days: 0,
+    latitude: 28.5383,
+    longitude: -81.3792
   });
   const [accommodations, setAccommodations] = useState<any[]>([]);
   const [spots, setSpots] = useState<any[]>([]);
   const [packingItems, setPackingItems] = useState<any[]>([]);
   const [companions, setCompanions] = useState<any[]>([]);
+  const [hourlyWeather, setHourlyWeather] = useState<any[]>([]);
   const { toast } = useToast();
+
 
   const handleDatesSelected = (start: Date, end: Date, days: number) => {
     setTripData({ ...tripData, start_date: start, end_date: end, total_days: days });
@@ -88,13 +97,34 @@ export default function MultiDayTripPlanner() {
       )}
 
       {step === 2 && (
-        <Tabs defaultValue="spots" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="spots">Fishing Spots</TabsTrigger>
-            <TabsTrigger value="accommodations">Hotels</TabsTrigger>
-            <TabsTrigger value="packing">Packing List</TabsTrigger>
-            <TabsTrigger value="companions">Companions</TabsTrigger>
-          </TabsList>
+        <>
+          <WeatherAlertNotifier
+            tripId="temp-trip-id"
+            organizerEmail="organizer@example.com"
+            latitude={tripData.latitude}
+            longitude={tripData.longitude}
+            startDate={tripData.start_date}
+            endDate={tripData.end_date}
+          />
+
+          <TripWeatherForecast
+            startDate={tripData.start_date}
+            endDate={tripData.end_date}
+            latitude={tripData.latitude}
+            longitude={tripData.longitude}
+            fishingSpots={spots}
+          />
+
+
+          <Tabs defaultValue="spots" className="w-full mt-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="spots">Fishing Spots</TabsTrigger>
+              <TabsTrigger value="accommodations">Hotels</TabsTrigger>
+              <TabsTrigger value="packing">Packing List</TabsTrigger>
+              <TabsTrigger value="companions">Companions</TabsTrigger>
+              <TabsTrigger value="hourly">Hourly Weather</TabsTrigger>
+            </TabsList>
+
           <TabsContent value="spots" className="mt-6">
             <FishingSpotPlanner
               spots={spots}
@@ -125,7 +155,12 @@ export default function MultiDayTripPlanner() {
               onRemove={(id) => setCompanions(companions.filter(c => c.id !== id))}
             />
           </TabsContent>
+          <TabsContent value="hourly" className="mt-6">
+            <HourlyWeatherDisplay hourlyData={hourlyWeather} />
+          </TabsContent>
         </Tabs>
+        </>
+
       )}
 
       {step === 2 && (

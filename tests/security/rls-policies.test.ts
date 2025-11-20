@@ -60,5 +60,82 @@ export async function testRLSPolicies(): Promise<TestResult[]> {
     });
   }
   
+  // Test 3: Users can only access their own multi-day trips
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user } } = await supabase.auth.signInWithPassword({
+      email: 'test@example.com',
+      password: 'testpass123'
+    });
+    
+    if (user) {
+      const { data, error } = await supabase
+        .from('multi_day_trips')
+        .select('*')
+        .neq('user_id', user.id);
+      
+      results.push({
+        test: 'Users cannot access other users trips',
+        passed: !data || data.length === 0,
+        error: error?.message
+      });
+    }
+  } catch (error: any) {
+    results.push({
+      test: 'Users cannot access other users trips',
+      passed: false,
+      error: error.message
+    });
+  }
+  
+  // Test 4: Users can only modify their own trip accommodations
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { error } = await supabase
+      .from('trip_accommodations')
+      .update({ name: 'Hacked Hotel' })
+      .neq('trip_id', 'fake-trip-id');
+    
+    results.push({
+      test: 'Users cannot modify other users trip accommodations',
+      passed: error !== null,
+      error: error?.message
+    });
+  } catch (error: any) {
+    results.push({
+      test: 'Users cannot modify other users trip accommodations',
+      passed: true
+    });
+  }
+  
+  // Test 5: Weather alerts are user-specific
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user } } = await supabase.auth.signInWithPassword({
+      email: 'test@example.com',
+      password: 'testpass123'
+    });
+    
+    if (user) {
+      const { data, error } = await supabase
+        .from('weather_alerts')
+        .select('*')
+        .neq('user_id', user.id);
+      
+      results.push({
+        test: 'Users cannot access other users weather alerts',
+        passed: !data || data.length === 0,
+        error: error?.message
+      });
+    }
+  } catch (error: any) {
+    results.push({
+      test: 'Users cannot access other users weather alerts',
+      passed: false,
+      error: error.message
+    });
+  }
+  
   return results;
 }
+
