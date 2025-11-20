@@ -1,60 +1,49 @@
-/**
- * Supabase Client Configuration
- * 
- * Initializes the Supabase client for database, authentication, and edge functions.
- * 
- * SECURITY: This file uses environment variables for credentials.
- * Never hardcode keys in production code.
- * 
- * Environment Variables Required:
- * - VITE_SUPABASE_URL: Your Supabase project URL (e.g., https://xxxxx.supabase.co)
- * - VITE_SUPABASE_ANON_KEY: Public anon key (safe for client-side use)
- * 
- * The anon key is safe to expose as it only grants access defined by
- * Row Level Security (RLS) policies in your database.
- * 
- * Supabase Documentation:
- * @see https://supabase.com/docs/reference/javascript/initializing - Client initialization
- * @see https://supabase.com/docs/guides/auth - Authentication guide
- * @see https://supabase.com/docs/guides/database/postgres/row-level-security - RLS policies
- * @see https://supabase.com/docs/guides/functions - Edge Functions
- * 
- * Setup Instructions:
- * 1. Create a Supabase project at https://supabase.com/dashboard
- * 2. Copy your project URL and anon key from Settings > API
- * 3. Add them to your .env file:
- *    VITE_SUPABASE_URL=https://xxxxx.supabase.co
- *    VITE_SUPABASE_ANON_KEY=your-anon-key-here
- * 
- * Features Enabled:
- * - Auto refresh tokens (keeps users logged in)
- * - Persist session (saves auth state to localStorage)
- * - Detect session in URL (handles OAuth redirects)
- */
-
 import { createClient } from '@supabase/supabase-js';
 
-// Get environment variables from .env file
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create Supabase client or null if not configured
-let supabase: ReturnType<typeof createClient> | null = null;
+// Mock auth for demo mode
+const createMockAuth = () => {
+  const listeners: any[] = [];
+  return {
+    onAuthStateChange: (callback: any) => {
+      listeners.push(callback);
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    },
+    signInWithPassword: async ({ email, password }: any) => {
+      const user = { id: 'demo-user', email, user_metadata: { full_name: 'Demo User' } };
+      const session = { user, access_token: 'demo-token' };
+      setTimeout(() => listeners.forEach(cb => cb('SIGNED_IN', session)), 100);
+      return { data: { user, session }, error: null };
+    },
+    signInWithOAuth: async () => ({ data: {}, error: { message: 'OAuth requires Supabase setup' } }),
+    signOut: async () => ({ error: null }),
+    getUser: async () => ({ data: { user: null }, error: null })
+  };
+};
+
+// Mock Supabase client for demo mode
+const createMockClient = () => ({
+  auth: createMockAuth(),
+  from: () => ({
+    select: () => ({ data: [], error: null }),
+    insert: () => ({ data: null, error: null }),
+    update: () => ({ data: null, error: null }),
+    eq: function() { return this; }
+  }),
+  functions: { invoke: async () => ({ data: null, error: null }) }
+});
+
+let supabase: any;
 
 if (supabaseUrl && supabaseKey) {
-  // Initialize Supabase client with auth configuration
   supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: true,      // Automatically refresh expired tokens
-      persistSession: true,         // Save session to localStorage
-      detectSessionInUrl: true,     // Handle OAuth callback URLs
-    },
+    auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true }
   });
 } else {
-  // Warn developers if Supabase is not configured
-  console.warn('⚠️ Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env file.');
-  console.warn('📖 See ENVIRONMENT_VARIABLES_GUIDE.md for setup instructions.');
+  console.warn('⚠️ Running in DEMO MODE - Supabase not configured');
+  supabase = createMockClient();
 }
 
-// Export client (may be null if not configured)
 export { supabase };
