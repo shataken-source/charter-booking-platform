@@ -30,6 +30,8 @@ const MarineProductsAdmin = lazy(() => import("./pages/MarineProductsAdmin"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
 const Favorites = lazy(() => import("./pages/Favorites"));
+const BookingHistory = lazy(() => import("./pages/BookingHistory"));
+
 
 
 const PhotoModerationPage = lazy(() => import("./pages/PhotoModerationPage"));
@@ -101,6 +103,8 @@ const App = () => (
                         <Route path="/payment-success" element={<PaymentSuccess />} />
                         <Route path="/payment-history" element={<PaymentHistory />} />
                         <Route path="/favorites" element={<Favorites />} />
+                        <Route path="/booking-history" element={<BookingHistory />} />
+
 
 
                         <Route path="/admin/photo-moderation" element={<PhotoModerationPage />} />
