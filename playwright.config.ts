@@ -29,7 +29,8 @@ export default defineConfig({
 
   
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.CI ? 'http://localhost:4173' : (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173'),
+
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -66,10 +67,13 @@ export default defineConfig({
   ],
   
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: process.env.CI ? 'npm run build && npm run preview' : 'npm run dev',
+    url: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes to start
+    timeout: 180 * 1000, // 3 minutes to build and start
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
+
 });
 
