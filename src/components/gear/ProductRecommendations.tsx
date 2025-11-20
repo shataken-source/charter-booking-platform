@@ -71,7 +71,6 @@ export function ProductRecommendations({ currentProductId, allProducts, userId }
             onQuickView={() => {}}
             onAddToCart={() => {}}
           />
-
         ))}
       </div>
     </div>

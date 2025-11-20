@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import MultiPaymentCheckout from './MultiPaymentCheckout';
 
 interface CartItem extends MarineProduct {
   quantity: number;
@@ -19,6 +20,7 @@ interface Props {
 
 export default function ShoppingCartSheet({ items, onUpdateQuantity, onRemove, onClear }: Props) {
   const [open, setOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -38,8 +40,14 @@ export default function ShoppingCartSheet({ items, onUpdateQuantity, onRemove, o
         console.error('Failed to track:', error);
       }
     }
-    alert('Redirecting to checkout... (In production, this would process the order)');
+    setCheckoutOpen(true);
   };
+
+  const handlePaymentSuccess = () => {
+    onClear();
+    setOpen(false);
+  };
+
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -119,6 +127,13 @@ export default function ShoppingCartSheet({ items, onUpdateQuantity, onRemove, o
           </div>
         )}
       </SheetContent>
+
+      <MultiPaymentCheckout
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        total={subtotal}
+        onSuccess={handlePaymentSuccess}
+      />
     </Sheet>
   );
 }
