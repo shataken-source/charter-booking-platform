@@ -918,7 +918,7 @@ export default function AdminPanel() {
           >
             Open Web Scraper Dashboard
           </Button>
-
+        </div>
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
@@ -947,16 +947,6 @@ export default function AdminPanel() {
             Manage AI Chatbot
           </Button>
         </div>
-
-        </div>
-
-
-
-        </div>
-
-
-
-
 
       </CardContent>
     </Card>
