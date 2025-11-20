@@ -2,17 +2,64 @@ import { MarineProduct } from '@/types/marineProduct';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, ShoppingCart } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, ShoppingCart, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   mainProduct: MarineProduct;
-  relatedProducts: MarineProduct[];
+  allProducts: MarineProduct[];
   onAddToCart: (products: MarineProduct[]) => void;
+  userId?: string;
 }
 
-export default function FrequentlyBoughtTogether({ mainProduct, relatedProducts, onAddToCart }: Props) {
+export default function FrequentlyBoughtTogether({ mainProduct, allProducts, onAddToCart, userId }: Props) {
   const [selected, setSelected] = useState<string[]>([mainProduct.id]);
+  const [relatedProducts, setRelatedProducts] = useState<MarineProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchRelatedProducts();
+  }, [mainProduct.id]);
+
+  const fetchRelatedProducts = async () => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('product-recommendations', {
+        body: {
+          userId: userId || 'anonymous',
+          productId: mainProduct.id,
+          action: 'frequently-bought-together',
+          products: allProducts
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.recommendations) {
+        const products = allProducts.filter(p => 
+          data.recommendations.includes(p.id) && p.id !== mainProduct.id
+        ).slice(0, 3);
+        setRelatedProducts(products);
+        // Auto-select first related product
+        if (products.length > 0) {
+          setSelected([mainProduct.id, products[0].id]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+      // Fallback: show products from same category
+      const sameCategory = allProducts
+        .filter(p => p.category === mainProduct.category && p.id !== mainProduct.id)
+        .slice(0, 3);
+      setRelatedProducts(sameCategory);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleProduct = (id: string) => {
     if (id === mainProduct.id) return;
@@ -21,8 +68,29 @@ export default function FrequentlyBoughtTogether({ mainProduct, relatedProducts,
     );
   };
 
-  const allProducts = [mainProduct, ...relatedProducts];
-  const selectedProducts = allProducts.filter(p => selected.includes(p.id));
+  const handleAddToCart = () => {
+    const productsToAdd = [mainProduct, ...relatedProducts].filter(p => selected.includes(p.id));
+    onAddToCart(productsToAdd);
+    toast({
+      title: "Added to cart",
+      description: `${productsToAdd.length} item(s) added successfully`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (relatedProducts.length === 0) return null;
+
+  const displayProducts = [mainProduct, ...relatedProducts];
+  const selectedProducts = displayProducts.filter(p => selected.includes(p.id));
   const totalPrice = selectedProducts.reduce((sum, p) => sum + p.price, 0);
   const totalSavings = selectedProducts.reduce((sum, p) => 
     p.originalPrice ? sum + (p.originalPrice - p.price) : sum, 0
@@ -34,7 +102,7 @@ export default function FrequentlyBoughtTogether({ mainProduct, relatedProducts,
       
       <div className="space-y-4">
         <div className="flex flex-wrap gap-4 items-start">
-          {allProducts.map((product, idx) => (
+          {displayProducts.map((product, idx) => (
             <div key={product.id} className="flex items-start gap-2">
               {idx > 0 && <Plus className="w-6 h-6 text-gray-400 mt-12" />}
               <div className="text-center">
@@ -72,7 +140,7 @@ export default function FrequentlyBoughtTogether({ mainProduct, relatedProducts,
           </div>
           
           <Button 
-            onClick={() => onAddToCart(selectedProducts)} 
+            onClick={handleAddToCart} 
             className="w-full" 
             size="lg"
           >

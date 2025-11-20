@@ -646,7 +646,9 @@ export default function AdminPanel() {
             className="w-full"
             variant="default"
           >
+            Manage Marine Products
           </Button>
+
         </div>
 
         <div className="space-y-4 pt-4 border-t">
@@ -694,7 +696,6 @@ export default function AdminPanel() {
           <AffiliateLinkTester />
         </div>
 
-        <div className="space-y-4 pt-4 border-t">
 
 
         <div className="space-y-4 pt-4 border-t">

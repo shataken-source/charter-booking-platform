@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { marineProducts } from '@/data/marineProducts';
 import { MarineProduct } from '@/types/marineProduct';
 import MarineProductCardEnhanced from '@/components/MarineProductCardEnhanced';
@@ -6,10 +6,13 @@ import MarineGearFilters from '@/components/MarineGearFilters';
 import ProductQuickView from '@/components/gear/ProductQuickView';
 import ShoppingCartSheet from '@/components/gear/ShoppingCart';
 import FrequentlyBoughtTogether from '@/components/gear/FrequentlyBoughtTogether';
+import { ProductRecommendations } from '@/components/gear/ProductRecommendations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ShoppingBag, Search, TrendingUp, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartItem extends MarineProduct {
   quantity: number;
@@ -29,6 +32,15 @@ export default function MarineGearShop() {
   const [quickViewProduct, setQuickViewProduct] = useState<MarineProduct | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchInput, setSearchInput] = useState('');
+  const [userId, setUserId] = useState<string | undefined>();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id);
+    });
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let result = [...marineProducts];
@@ -90,10 +102,36 @@ export default function MarineGearShop() {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
+
+    toast({
+      title: "Added to cart",
+      description: `${product.name} added successfully`,
+    });
+
+    // Track product view
+    if (userId) {
+      supabase.functions.invoke('product-recommendations', {
+        body: {
+          userId,
+          productId: product.id,
+          action: 'track-view'
+        }
+      });
+    }
   };
 
   const addMultipleToCart = (products: MarineProduct[]) => {
-    products.forEach(product => addToCart(product));
+    products.forEach(product => {
+      setCart(prev => {
+        const existing = prev.find(item => item.id === product.id);
+        if (existing) {
+          return prev.map(item => 
+            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          );
+        }
+        return [...prev, { ...product, quantity: 1 }];
+      });
+    });
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -111,7 +149,6 @@ export default function MarineGearShop() {
   };
 
   const featuredProducts = marineProducts.filter(p => p.featured).slice(0, 3);
-  const relatedProducts = marineProducts.filter(p => !p.featured).slice(0, 2);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-cyan-50">
@@ -122,7 +159,7 @@ export default function MarineGearShop() {
             <ShoppingBag className="w-12 h-12" />
             <h1 className="text-4xl font-bold">Marine Gear Shop</h1>
           </div>
-          <p className="text-xl mb-6">Premium equipment from Amazon, Walmart, Temu & BoatUS</p>
+          <p className="text-xl mb-6">AI-Powered Recommendations • Premium Equipment from Top Retailers</p>
           
           {/* Search Bar */}
           <div className="max-w-2xl">
@@ -149,13 +186,14 @@ export default function MarineGearShop() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Frequently Bought Together */}
+        {/* AI-Powered Frequently Bought Together */}
         {featuredProducts.length > 0 && (
           <div className="mb-8">
             <FrequentlyBoughtTogether
               mainProduct={featuredProducts[0]}
-              relatedProducts={relatedProducts}
+              allProducts={marineProducts}
               onAddToCart={addMultipleToCart}
+              userId={userId}
             />
           </div>
         )}
@@ -168,11 +206,15 @@ export default function MarineGearShop() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {featuredProducts.map(product => (
-              <div key={product.id} className="flex gap-3 bg-white p-3 rounded-lg">
+              <div key={product.id} className="flex gap-3 bg-white p-3 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setQuickViewProduct(product)}>
                 <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
                 <div>
                   <h4 className="font-semibold text-sm line-clamp-2">{product.name}</h4>
                   <p className="text-blue-600 font-bold">${product.price}</p>
+                  <Button size="sm" onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="mt-1">
+                    Add to Cart
+                  </Button>
                 </div>
               </div>
             ))}
@@ -206,6 +248,12 @@ export default function MarineGearShop() {
                 />
               ))}
             </div>
+
+            {/* AI-Powered Recommendations */}
+            <ProductRecommendations
+              allProducts={marineProducts}
+              userId={userId}
+            />
           </div>
         </div>
       </div>
