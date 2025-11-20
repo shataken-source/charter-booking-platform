@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
-import { Shield, Users, Database, Phone, Download, Upload, Mail, BarChart, GitMerge, Clock, Trophy, KeyRound, FileCheck, Send, List, MessageSquare, UserCog, LineChart, ShoppingBag, TrendingUp, Settings, DollarSign, Activity } from 'lucide-react';
+import { Shield, Users, Database, Phone, Download, Upload, Mail, BarChart, GitMerge, Clock, Trophy, KeyRound, FileCheck, Send, List, MessageSquare, UserCog, LineChart, ShoppingBag, TrendingUp, Settings, DollarSign, Activity, Link, TestTube } from 'lucide-react';
+
+
 
 
 
@@ -28,7 +30,11 @@ import EmailNotificationManager from './EmailNotificationManager';
 import { ReminderSchedulerPanel } from './ReminderSchedulerPanel';
 import PhotoContestVoteAnalytics from './PhotoContestVoteAnalytics';
 import ConfigurationManager from './ConfigurationManager';
-import FeatureFlagManager from './FeatureFlagManager';
+import AffiliateCredentialsManager from './admin/AffiliateCredentialsManager';
+import AffiliateLinkTester from './admin/AffiliateLinkTester';
+
+
+
 
 
 
@@ -640,9 +646,56 @@ export default function AdminPanel() {
             className="w-full"
             variant="default"
           >
-            Manage Marine Products
           </Button>
         </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Link className="w-4 h-4" />
+            Affiliate Credentials Manager
+          </h3>
+          <div className="bg-lime-50 border border-lime-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Link className="w-5 h-5 text-lime-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-lime-900">Configure Affiliate IDs & API Keys</p>
+                <p className="text-sm text-lime-700 mt-1">
+                  Manage affiliate credentials for Amazon, Walmart, Temu, and BoatUS. Set affiliate IDs, API keys, and commission rates for all retailers.
+                </p>
+                <p className="text-xs text-lime-600 mt-2">
+                  Features: Secure credential storage, show/hide sensitive data, commission tracking, enable/disable retailers
+                </p>
+              </div>
+            </div>
+          </div>
+          <AffiliateCredentialsManager />
+        </div>
+
+
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="font-semibold flex items-center gap-2">
+            <TestTube className="w-4 h-4" />
+            Affiliate Link Tester
+          </h3>
+          <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <TestTube className="w-5 h-5 text-fuchsia-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-fuchsia-900">Test All Affiliate Links</p>
+                <p className="text-sm text-fuchsia-700 mt-1">
+                  Automatically test affiliate links for Amazon, Walmart, Temu, and BoatUS to verify they're working correctly. Check if affiliate IDs are properly appended, test redirects, and validate tracking.
+                </p>
+                <p className="text-xs text-fuchsia-600 mt-2">
+                  Features: Link validation, affiliate ID verification, redirect testing, response time monitoring, error detection
+                </p>
+              </div>
+            </div>
+          </div>
+          <AffiliateLinkTester />
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">

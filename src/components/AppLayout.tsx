@@ -20,7 +20,9 @@ import Footer from './Footer';
 import PWAEnhancedInstallPrompt from './PWAEnhancedInstallPrompt';
 import OfflineIndicator from './OfflineIndicator';
 import FishyAIChat from './FishyAIChat';
+import ConversationalAIAssistant from './personalization/ConversationalAIAssistant';
 import { useUser } from '@/contexts/UserContext';
+
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -54,6 +56,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
       
       {/* Fishy AI assistant - context-aware based on user role */}
       <FishyAIChat userType={user?.role === 'captain' ? 'captain' : 'customer'} />
+      
+      {/* Conversational AI Shopping Assistant (Rufus-style) */}
+      <ConversationalAIAssistant />
+
     </div>
   );
 }

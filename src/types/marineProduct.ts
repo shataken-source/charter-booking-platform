@@ -5,9 +5,11 @@ export interface MarineProduct {
   price: number;
   originalPrice?: number;
   image: string;
-  category: 'safety' | 'fishing' | 'accessories' | 'navigation' | 'maintenance';
-  retailer: 'amazon' | 'boatus' | 'walmart';
+  category: 'safety' | 'fishing' | 'accessories' | 'navigation' | 'maintenance' | 'electronics';
+  retailer: 'amazon' | 'boatus' | 'walmart' | 'temu';
   affiliateLink: string;
+  fastShipping?: boolean;
+
   rating: number;
   reviewCount: number;
   inStock: boolean;

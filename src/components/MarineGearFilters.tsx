@@ -57,8 +57,10 @@ export default function MarineGearFilters({ filters, onFilterChange }: Props) {
             <SelectItem value="fishing">Fishing Equipment</SelectItem>
             <SelectItem value="accessories">Boat Accessories</SelectItem>
             <SelectItem value="navigation">Navigation</SelectItem>
+            <SelectItem value="electronics">Electronics</SelectItem>
             <SelectItem value="maintenance">Maintenance</SelectItem>
           </SelectContent>
+
         </Select>
       </div>
 
@@ -71,9 +73,11 @@ export default function MarineGearFilters({ filters, onFilterChange }: Props) {
           <SelectContent>
             <SelectItem value="all">All Retailers</SelectItem>
             <SelectItem value="amazon">Amazon</SelectItem>
-            <SelectItem value="boatus">BoatUS</SelectItem>
             <SelectItem value="walmart">Walmart</SelectItem>
+            <SelectItem value="temu">Temu</SelectItem>
+            <SelectItem value="boatus">BoatUS</SelectItem>
           </SelectContent>
+
         </Select>
       </div>
 
