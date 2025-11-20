@@ -455,10 +455,25 @@ export default function AdminPanel() {
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            Automated Booking Reminders
+            Captain Document & Profile Reminders
           </h3>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-yellow-900">Automated Captain Reminders</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Automatically send email reminders to captains when documents (licenses, insurance, certifications) are expiring in 30, 14, or 7 days. Also reminds captains to update their profile every 90 days.
+                </p>
+                <p className="text-xs text-yellow-600 mt-2">
+                  Features: Document expiration tracking, profile update reminders, automated daily checks, manual trigger option
+                </p>
+              </div>
+            </div>
+          </div>
           <ReminderSchedulerPanel />
         </div>
+
 
         <div className="space-y-4 pt-4 border-t">
           <h3 className="font-semibold flex items-center gap-2">

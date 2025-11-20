@@ -31,6 +31,11 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
+const GiftCardPurchase = lazy(() => import("./components/GiftCardPurchase"));
+const PriceAlertManager = lazy(() => import("./components/PriceAlertManager"));
+const RenewDocument = lazy(() => import("./pages/RenewDocument"));
+
+
 
 
 
@@ -102,8 +107,11 @@ const App = () => (
                         <Route path="/admin/marine-products" element={<MarineProductsAdmin />} />
                         <Route path="/payment-success" element={<PaymentSuccess />} />
                         <Route path="/payment-history" element={<PaymentHistory />} />
-                        <Route path="/favorites" element={<Favorites />} />
                         <Route path="/booking-history" element={<BookingHistory />} />
+                        <Route path="/gift-cards" element={<GiftCardPurchase />} />
+                        <Route path="/price-alerts" element={<PriceAlertManager />} />
+                        <Route path="/renew-document" element={<RenewDocument />} />
+
 
 
 

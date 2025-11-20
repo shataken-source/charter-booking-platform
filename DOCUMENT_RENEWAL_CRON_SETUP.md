@@ -1,161 +1,169 @@
-# Document Renewal Reminder System - Setup Guide
+# Document Renewal Workflow Setup Guide
 
 ## Overview
-Automated email system that sends renewal reminders to captains 30, 14, and 7 days before document expiration.
-
-## Edge Function Created
-- **Function Name**: `document-renewal-cron`
-- **Purpose**: Daily cron job to check expiring documents and send email reminders
-- **Email Provider**: SendGrid (SENDGRID_API_KEY already configured)
+Streamlined document renewal system with one-click upload from reminder emails, automatic OCR extraction, and instant verification.
 
 ## Features
-✅ Automatic daily checks for expiring documents
-✅ Sends reminders at 30, 14, and 7 days before expiration
-✅ Beautiful HTML email template with document details
-✅ Direct link to upload renewed documents
-✅ Tracks which reminders were sent
-✅ Works with existing captain_documents table
+✅ Secure tokenized renewal links (7-day expiration)
+✅ Drag-and-drop document upload
+✅ Automatic OCR extraction (expiration dates, document numbers)
+✅ Real-time verification status updates
+✅ Beautiful email templates with direct renewal links
 
-## Email Template Includes
-- Captain's name (personalized)
-- Document type (USCG License, Insurance, etc.)
-- Exact expiration date
-- Days until expiration
-- Urgency indicator (URGENT for 7 days or less)
-- Direct "Upload Renewed Document" button
-- Information about what happens if document expires
+## Database Tables
 
-## Setting Up the Cron Job
+### document_renewal_tokens
+Stores secure tokens for email renewal links:
+- `id`: UUID primary key
+- `user_id`: References auth.users
+- `token`: Unique secure token
+- `document_type`: Type of document (license, insurance, etc.)
+- `expires_at`: Token expiration (7 days default)
+- `used_at`: Timestamp when token was used
+- `created_at`: Creation timestamp
 
-### Option 1: Supabase Cron (Recommended)
-Run this SQL in your Supabase SQL Editor:
+### document_ocr_data
+Stores OCR extracted data:
+- `id`: UUID primary key
+- `user_id`: References auth.users
+- `document_type`: Type of document
+- `extracted_data`: JSONB with full OCR results
+- `confidence_score`: OCR confidence (0-1)
+- `expiration_date`: Extracted expiration date
+- `document_number`: Extracted document number
+- `issuing_authority`: Extracted issuing authority
+- `created_at`: Creation timestamp
 
-\`\`\`sql
--- Create pg_cron extension if not exists
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+## Edge Functions
 
--- Schedule daily check at 9 AM UTC
-SELECT cron.schedule(
-  'document-renewal-reminders',
-  '0 9 * * *', -- Every day at 9 AM UTC
-  $$
-  SELECT net.http_post(
-    url := 'https://api.databasepad.com/functions/v1/document-renewal-cron',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY"}'::jsonb,
-    body := '{}'::jsonb
-  );
-  $$
-);
-\`\`\`
+### 1. ocr-document-processor
+Processes uploaded documents using Google Cloud Vision API.
 
-### Option 2: External Cron Service
-Use services like:
-- **Cron-job.org** (free)
-- **EasyCron** (free tier available)
-- **GitHub Actions** (see below)
+**Endpoint**: `/functions/v1/ocr-document-processor`
 
-Configure to call:
-- **URL**: `https://api.databasepad.com/functions/v1/document-renewal-cron`
-- **Method**: POST
-- **Schedule**: Daily at 9 AM
-- **Headers**: 
-  - `Content-Type: application/json`
-  - `Authorization: Bearer YOUR_SUPABASE_ANON_KEY`
+**Request**:
+```json
+{
+  "imageBase64": "base64_encoded_image",
+  "documentType": "USCG License",
+  "userId": "user-uuid"
+}
+```
 
-### Option 3: GitHub Actions Cron
-Create `.github/workflows/document-renewal-cron.yml`:
-
-\`\`\`yaml
-name: Document Renewal Reminders
-
-on:
-  schedule:
-    - cron: '0 9 * * *'  # Daily at 9 AM UTC
-  workflow_dispatch:  # Allow manual trigger
-
-jobs:
-  send-reminders:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Document Renewal Check
-        run: |
-          curl -X POST \
-            https://api.databasepad.com/functions/v1/document-renewal-cron \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
-\`\`\`
-
-## Testing the System
-
-### Manual Test
-Call the edge function directly:
-
-\`\`\`bash
-curl -X POST https://api.databasepad.com/functions/v1/document-renewal-cron \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY"
-\`\`\`
-
-### Test with Sample Data
-1. Go to Captain Dashboard → Documents tab
-2. Upload a document with expiration date 30 days from now
-3. Run the cron function manually
-4. Check email for renewal reminder
-
-## Email Customization
-To customize the email template, update the `emailHtml` variable in the `document-renewal-cron` function:
-- Change colors in the `<style>` section
-- Modify text content
-- Update the upload link URL
-- Add your company logo
-
-## Monitoring
-The function returns:
-\`\`\`json
+**Response**:
+```json
 {
   "success": true,
-  "reminders_sent": 5,
-  "details": [
-    {
-      "captain_email": "captain@example.com",
-      "document_type": "USCG License",
-      "days_until_expiration": 30,
-      "sent": true
-    }
-  ]
+  "data": {
+    "fullText": "extracted text...",
+    "expirationDate": "12/31/2025",
+    "documentNumber": "ABC123456",
+    "confidence": 0.95
+  }
 }
-\`\`\`
+```
 
-## Troubleshooting
+### 2. document-renewal-reminders
+Generates and verifies renewal tokens.
 
-### Emails Not Sending
-1. Verify SENDGRID_API_KEY is set in Supabase Edge Function secrets
-2. Check SendGrid dashboard for email delivery status
-3. Verify captain email addresses in database
-4. Check function logs in Supabase dashboard
+**Actions**:
 
-### Cron Not Running
-1. Verify cron job is scheduled correctly
-2. Check cron service logs
-3. Test function manually to ensure it works
-4. Verify authorization token is valid
+**Generate Token**:
+```json
+{
+  "action": "generate_token",
+  "userId": "user-uuid",
+  "documentType": "USCG License",
+  "email": "captain@example.com"
+}
+```
 
-## Database Requirements
-Ensure `captain_documents` table has:
-- `expiration_date` column (timestamp)
-- Foreign key to `captains` table
-- Captain email accessible via join
+**Verify Token**:
+```json
+{
+  "action": "verify_token",
+  "token": "renewal-token-uuid"
+}
+```
+
+## Email Template Usage
+
+```typescript
+import { DocumentExpirationEmail } from '@/components/email-templates/DocumentExpirationEmail';
+
+// Generate renewal token first
+const { data } = await supabase.functions.invoke('document-renewal-reminders', {
+  body: {
+    action: 'generate_token',
+    userId: captain.id,
+    documentType: 'USCG License'
+  }
+});
+
+// Send email with renewal URL
+<DocumentExpirationEmail
+  captainName="John Smith"
+  documentType="USCG License"
+  expirationDate="2025-12-31"
+  daysUntilExpiration={14}
+  renewalUrl={data.renewalUrl}
+/>
+```
+
+## User Flow
+
+1. **Captain receives email** with expiring document notice
+2. **Clicks "Renew Document Now"** button in email
+3. **Redirected to /renew-document?token=xxx**
+4. **Token verified** (checks expiration and usage)
+5. **Drag & drop document** or click to select file
+6. **OCR processes document** automatically
+7. **Expiration date extracted** and displayed
+8. **Captain confirms upload**
+9. **Verification status updated** instantly
+10. **Redirected to dashboard** with success message
+
+## GitHub Actions Integration
+
+The existing `.github/workflows/captain-reminders.yml` workflow sends daily reminders. Update it to generate renewal tokens:
+
+```yaml
+# In the workflow, call the edge function to generate tokens
+- name: Send Document Reminders
+  run: |
+    curl -X POST https://your-project.supabase.co/functions/v1/send-reminders \
+      -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+```
+
+## Testing
+
+### Test OCR Processing
+```bash
+# Upload a test document image
+curl -X POST https://your-project.supabase.co/functions/v1/ocr-document-processor \
+  -H "Content-Type: application/json" \
+  -d '{"imageBase64": "..."}'
+```
+
+### Test Token Generation
+```bash
+curl -X POST https://your-project.supabase.co/functions/v1/document-renewal-reminders \
+  -H "Content-Type: application/json" \
+  -d '{"action": "generate_token", "userId": "...", "documentType": "USCG License"}'
+```
+
+## Security Features
+
+✅ Tokens expire after 7 days
+✅ Tokens can only be used once
+✅ User must be authenticated to upload
+✅ RLS policies protect all data
+✅ OCR data stored separately for audit trail
 
 ## Next Steps
-1. Set up cron job using one of the options above
-2. Test with sample documents
-3. Monitor email delivery for first week
-4. Adjust timing if needed (e.g., send at different hour)
-5. Add additional reminder intervals if desired (60 days, 3 days, etc.)
 
-## Support
-For issues or questions:
-- Check Supabase function logs
-- Review SendGrid delivery reports
-- Test function manually first
-- Verify all environment variables are set
+1. Configure Google Cloud Vision API key in Supabase secrets
+2. Update email sending service to use new template
+3. Test renewal flow end-to-end
+4. Monitor OCR accuracy and adjust patterns
+5. Add admin dashboard for OCR review queue

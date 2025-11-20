@@ -12,9 +12,7 @@ import EnhancedBookingModal from './booking/EnhancedBookingModal';
 import { FavoriteButton } from './FavoriteButton';
 import { WaitlistModal } from './WaitlistModal';
 import { useUserContext } from '@/contexts/UserContext';
-
-
-
+import PriceAlertButton from './PriceAlertButton';
 import CaptainWeatherBadge from './CaptainWeatherBadge';
 
 
@@ -38,6 +36,7 @@ interface CharterCardProps {
   isScraped?: boolean;
   isClaimed?: boolean;
 }
+
 
 
 
@@ -215,20 +214,27 @@ const CharterCard = memo(function CharterCard(props: CharterCardProps) {
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2 mb-3">
             <button
               onClick={handleViewDetails}
-              className="flex-1 gradient-primary text-white py-2.5 px-4 rounded-xl transition font-semibold hover:opacity-90 shadow-md"
+              className="flex-1 gradient-primary text-white py-2.5 px-4 rounded-xl transition font-semibold hover:opacity-90 shadow-md text-sm"
             >
               Details
             </button>
-            <button
-              onClick={() => setShowWaitlistModal(true)}
-              className="flex-1 bg-amber-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-amber-700 shadow-md text-sm"
-            >
-              Join Waitlist
-            </button>
+            <PriceAlertButton
+              charterId={props.id}
+              charterName={props.businessName}
+              currentPrice={props.priceFullDay || 0}
+            />
           </div>
+
+          <button
+            onClick={() => setShowWaitlistModal(true)}
+            className="w-full bg-amber-600 text-white py-2.5 px-4 rounded-xl transition font-semibold hover:bg-amber-700 shadow-md text-sm"
+          >
+            Join Waitlist
+          </button>
+
 
         </div>
       </div>
