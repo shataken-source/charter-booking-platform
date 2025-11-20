@@ -5,6 +5,11 @@ on:
     branches: [develop]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  statuses: write
+
+
 jobs:
   pre-deployment-checks:
     name: Pre-Deployment Validation
