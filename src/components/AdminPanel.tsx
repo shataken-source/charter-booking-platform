@@ -863,9 +863,8 @@ export default function AdminPanel() {
             variant="default"
           >
             View Performance Monitor
-          >
-            View Performance Monitor
           </Button>
+
         </div>
 
         <div className="space-y-4 pt-4 border-t">

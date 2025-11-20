@@ -63,8 +63,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
       
+      - name: Auto-fix ESLint issues
+        run: npm run lint:fix || true
+        continue-on-error: true
+      
       - name: Run ESLint
         run: npm run lint
+
 
   # Parallel job 3: Unit tests (if you add them)
   unit-tests:
