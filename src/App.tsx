@@ -34,6 +34,8 @@ const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const GiftCardPurchase = lazy(() => import("./components/GiftCardPurchase"));
 const PriceAlertManager = lazy(() => import("./components/PriceAlertManager"));
 const RenewDocument = lazy(() => import("./pages/RenewDocument"));
+const MultiDayTripPlanner = lazy(() => import("./components/MultiDayTripPlanner"));
+
 
 
 
@@ -111,6 +113,8 @@ const App = () => (
                         <Route path="/gift-cards" element={<GiftCardPurchase />} />
                         <Route path="/price-alerts" element={<PriceAlertManager />} />
                         <Route path="/renew-document" element={<RenewDocument />} />
+                        <Route path="/plan-trip" element={<MultiDayTripPlanner />} />
+
 
 
 

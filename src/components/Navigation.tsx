@@ -14,10 +14,12 @@ export default function Navigation() {
   const navLinks = [
     { name: 'Charters', href: '#charters' },
     { name: 'Captains', href: '/captain-directory' },
+    { name: 'Plan Trip', href: '/plan-trip' },
     { name: 'Community', href: '/community' },
     { name: 'Affiliate Program', href: '/affiliate-program' },
     { name: 'About', href: '/about' },
   ];
+
 
 
   return (
