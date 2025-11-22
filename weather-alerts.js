@@ -1,592 +1,438 @@
-// Weather Alert System with Email Notifications
-// File: /api/weather-alerts.js
+/**
+ * Weather Alerts System for Charter Booking Platform
+ * Supabase Edge Function - Runs hourly via cron
+ * Checks NOAA buoy data and sends email alerts for dangerous conditions
+ */
 
-import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-// Email transporter configuration
-const emailTransporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD
-  }
-});
+// NOAA Buoy API configuration
+const NOAA_BUOY_API = 'https://www.ndbc.noaa.gov/data/realtime2/'
+const NOAA_STATIONS = {
+  'orange_beach': '42012',
+  'mobile_bay': '42040', 
+  'pensacola': '42039',
+  'dauphin_island': '42013',
+  'mississippi_sound': '42007'
+}
 
-// Weather alert thresholds
-const ALERT_THRESHOLDS = {
-  CRITICAL: {
-    windSpeed: 35, // knots
-    waveHeight: 8, // feet
-    pressureDrop: -5, // hPa per 3 hours
-    visibility: 1, // nautical miles
-    severity: 'critical',
-    color: '#DC2626',
-    icon: '🚨'
-  },
-  HIGH: {
-    windSpeed: 25,
-    waveHeight: 5,
-    pressureDrop: -3,
-    visibility: 2,
-    severity: 'high',
-    color: '#EA580C',
-    icon: '⚠️'
-  },
-  MEDIUM: {
-    windSpeed: 20,
-    waveHeight: 3,
-    pressureDrop: -2,
-    visibility: 3,
-    severity: 'medium',
-    color: '#F59E0B',
-    icon: '⚡'
-  },
-  LOW: {
-    windSpeed: 15,
-    waveHeight: 2,
-    pressureDrop: -1,
-    visibility: 5,
-    severity: 'low',
-    color: '#3B82F6',
-    icon: 'ℹ️'
-  }
-};
+// Weather thresholds for alerts
+const WEATHER_THRESHOLDS = {
+  wind_speed_warning: 20, // knots
+  wind_speed_danger: 28,  // knots
+  wave_height_warning: 4, // feet
+  wave_height_danger: 6,  // feet
+  pressure_drop_warning: 5, // hPa in 3 hours
+  visibility_warning: 2,  // nautical miles
+}
 
-class WeatherAlertService {
-  constructor() {
-    this.noaaBaseUrl = 'https://www.ndbc.noaa.gov/data/realtime2';
-    this.nwsBaseUrl = 'https://api.weather.gov';
+// Alert level definitions
+const ALERT_LEVELS = {
+  SAFE: 'safe',
+  CAUTION: 'caution',
+  WARNING: 'warning',
+  DANGER: 'danger'
+}
+
+serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
-  // Main handler for weather alerts
-  async checkWeatherAlerts() {
-    try {
-      console.log('🌊 Starting weather alert check...');
+  try {
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
-      // Get all users with trips scheduled
-      const users = await this.getUsersWithUpcomingTrips();
-      
-      // Get all captains operating today
-      const captains = await this.getActiveCaptains();
-
-      // Check weather for each user destination
-      const userAlerts = await this.checkUserDestinations(users);
-      
-      // Check weather for captain locations
-      const captainAlerts = await this.checkCaptainLocations(captains);
-
-      // Send email notifications
-      await this.sendAlertEmails(userAlerts, 'user');
-      await this.sendAlertEmails(captainAlerts, 'captain');
-
-      // Send push notifications
-      await this.sendPushNotifications(userAlerts, 'user');
-      await this.sendPushNotifications(captainAlerts, 'captain');
-
-      console.log(`✅ Weather alerts processed: ${userAlerts.length} users, ${captainAlerts.length} captains`);
-
-      return {
-        success: true,
-        userAlerts: userAlerts.length,
-        captainAlerts: captainAlerts.length
-      };
-    } catch (error) {
-      console.error('❌ Weather alert error:', error);
-      throw error;
-    }
-  }
-
-  // Get users with upcoming trips
-  async getUsersWithUpcomingTrips() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(23, 59, 59, 999);
-
-    const { data: bookings, error } = await supabase
+    // Get all bookings for the next 24 hours
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    const { data: bookings, error: bookingError } = await supabaseClient
       .from('bookings')
       .select(`
         *,
-        user:users!inner(*),
-        trip:trips!inner(
-          *,
-          location:locations(*)
+        users (
+          email,
+          first_name,
+          last_name,
+          phone,
+          notification_preferences
+        ),
+        captains (
+          business_name,
+          dock_location,
+          emergency_contact
+        ),
+        trips (
+          departure_location,
+          trip_type,
+          duration_hours,
+          max_passengers
         )
       `)
+      .eq('status', 'confirmed')
       .gte('trip_date', new Date().toISOString())
       .lte('trip_date', tomorrow.toISOString())
-      .eq('status', 'confirmed')
-      .not('user', 'is', null);
 
-    if (error) {
-      console.error('Error fetching bookings:', error);
-      return [];
+    if (bookingError) {
+      throw bookingError
     }
 
-    return (bookings || []).map(booking => ({
-      userId: booking.user.id,
-      email: booking.user.email,
-      name: booking.user.full_name,
-      tripDate: booking.trip_date,
-      location: booking.trip.location,
-      tripTitle: booking.trip.title,
-      preferences: booking.user.notification_preferences || {}
-    }));
-  }
+    console.log(`Found ${bookings?.length || 0} bookings for weather check`)
 
-  // Get active captains
-  async getActiveCaptains() {
-    const { data: captains, error } = await supabase
-      .from('captains')
-      .select(`
-        *,
-        user:users!inner(*),
-        home_port:locations(*)
-      `)
-      .eq('status', 'active')
-      .not('home_port', 'is', null);
-
-    if (error) {
-      console.error('Error fetching captains:', error);
-      return [];
-    }
-
-    return (captains || []).map(captain => ({
-      captainId: captain.id,
-      email: captain.user.email,
-      name: captain.user.full_name,
-      location: captain.home_port,
-      preferences: captain.user.notification_preferences || {}
-    }));
-  }
-
-  // Check weather for user destinations
-  async checkUserDestinations(users) {
-    const alerts = [];
-
-    for (const user of users) {
+    // Process each booking
+    const alertsSent = []
+    
+    for (const booking of bookings || []) {
       try {
-        // Skip if user disabled weather alerts
-        if (user.preferences.weatherAlerts === false) continue;
-
-        const { lat, lon } = user.location;
+        // Determine which NOAA station to use based on location
+        const station = determineNearestStation(booking.trips?.departure_location)
         
-        // Get comprehensive weather data
-        const [buoyData, nwsData, tideData] = await Promise.all([
-          this.getNearestBuoyData(lat, lon),
-          this.getNWSForecast(lat, lon),
-          this.getTideData(lat, lon)
-        ]);
-
-        // Analyze conditions
-        const analysis = this.analyzeWeather(buoyData, nwsData, tideData);
-
-        // Create alerts if needed
-        if (analysis.alerts.length > 0) {
-          alerts.push({
-            user,
-            analysis,
-            timestamp: new Date().toISOString()
-          });
-        }
-      } catch (error) {
-        console.error(`Error checking weather for user ${user.userId}:`, error);
-      }
-    }
-
-    return alerts;
-  }
-
-  // Check weather for captain locations
-  async checkCaptainLocations(captains) {
-    const alerts = [];
-
-    for (const captain of captains) {
-      try {
-        if (captain.preferences.weatherAlerts === false) continue;
-
-        const { lat, lon } = captain.location;
+        // Fetch current weather data from NOAA
+        const weatherData = await fetchNOAABuoyData(station)
         
-        const [buoyData, nwsData] = await Promise.all([
-          this.getNearestBuoyData(lat, lon),
-          this.getNWSForecast(lat, lon)
-        ]);
-
-        const analysis = this.analyzeWeather(buoyData, nwsData);
-
-        if (analysis.alerts.length > 0) {
-          alerts.push({
-            captain,
+        // Analyze weather conditions
+        const analysis = analyzeWeatherConditions(weatherData)
+        
+        // Determine if alert is needed
+        if (analysis.alertLevel !== ALERT_LEVELS.SAFE) {
+          // Send alert email
+          const emailSent = await sendWeatherAlert(
+            booking,
+            weatherData,
             analysis,
-            timestamp: new Date().toISOString()
-          });
+            supabaseClient
+          )
+          
+          if (emailSent) {
+            alertsSent.push({
+              bookingId: booking.id,
+              userId: booking.user_id,
+              alertLevel: analysis.alertLevel,
+              conditions: analysis.conditions
+            })
+            
+            // Log notification in database
+            await supabaseClient
+              .from('notification_log')
+              .insert({
+                user_id: booking.user_id,
+                type: 'weather_alert',
+                channel: 'email',
+                subject: `Weather Alert: ${analysis.alertLevel.toUpperCase()}`,
+                content: analysis.summary,
+                metadata: {
+                  booking_id: booking.id,
+                  alert_level: analysis.alertLevel,
+                  weather_data: weatherData
+                }
+              })
+          }
         }
+        
+        // Update booking with weather check
+        await supabaseClient
+          .from('bookings')
+          .update({
+            last_weather_check: new Date().toISOString(),
+            weather_alert_level: analysis.alertLevel,
+            weather_conditions: analysis.conditions
+          })
+          .eq('id', booking.id)
+          
       } catch (error) {
-        console.error(`Error checking weather for captain ${captain.captainId}:`, error);
+        console.error(`Error processing booking ${booking.id}:`, error)
       }
     }
 
-    return alerts;
-  }
-
-  // Get nearest NOAA buoy data
-  async getNearestBuoyData(lat, lon) {
-    // Gulf Coast buoy stations
-    const gulfBuoys = {
-      '42039': { lat: 28.791, lon: -86.008, name: 'Pensacola' },
-      '42040': { lat: 29.212, lon: -88.226, name: 'Luke Offshore' },
-      '42012': { lat: 30.065, lon: -87.555, name: 'Orange Beach' },
-      '42001': { lat: 25.897, lon: -89.668, name: 'Grand Isle' },
-      '42019': { lat: 27.907, lon: -95.352, name: 'Freeport TX' },
-      '42020': { lat: 26.968, lon: -96.695, name: 'Corpus Christi' }
-    };
-
-    // Find nearest buoy
-    let nearestBuoy = null;
-    let minDistance = Infinity;
-
-    for (const [id, buoy] of Object.entries(gulfBuoys)) {
-      const distance = this.calculateDistance(lat, lon, buoy.lat, buoy.lon);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestBuoy = { id, ...buoy, distance };
+    return new Response(
+      JSON.stringify({
+        success: true,
+        bookingsChecked: bookings?.length || 0,
+        alertsSent: alertsSent.length,
+        alerts: alertsSent
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
-    }
-
-    // Fetch buoy data
-    try {
-      const response = await fetch(`${this.noaaBaseUrl}/${nearestBuoy.id}.txt`);
-      const text = await response.text();
-      return this.parseBuoyData(text, nearestBuoy);
-    } catch (error) {
-      console.error(`Error fetching buoy ${nearestBuoy.id}:`, error);
-      return null;
-    }
+    )
+    
+  } catch (error) {
+    console.error('Weather alert error:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      }
+    )
   }
+})
 
-  // Parse NOAA buoy data
-  parseBuoyData(text, buoyInfo) {
-    const lines = text.split('\n');
-    const headers = lines[0].split(/\s+/);
-    const latest = lines[2].split(/\s+/);
-
-    const data = {
-      buoy: buoyInfo,
-      timestamp: new Date(`${latest[0]}-${latest[1]}-${latest[2]}T${latest[3]}:${latest[4]}:00Z`),
-      measurements: {}
-    };
-
+/**
+ * Fetch real-time buoy data from NOAA
+ */
+async function fetchNOAABuoyData(stationId) {
+  try {
+    // Fetch standard meteorological data
+    const metResponse = await fetch(`${NOAA_BUOY_API}/${stationId}.txt`)
+    const metData = await metResponse.text()
+    
+    // Parse the data (NOAA format is space-delimited)
+    const lines = metData.split('\n')
+    const headers = lines[0].replace('#', '').trim().split(/\s+/)
+    const currentData = lines[2].trim().split(/\s+/) // Most recent reading
+    
+    // Map to object
+    const weatherData = {}
     headers.forEach((header, index) => {
-      if (index > 4 && latest[index] !== 'MM' && latest[index] !== '999') {
-        const value = parseFloat(latest[index]);
-        data.measurements[header.toLowerCase()] = value;
-      }
-    });
-
-    // Convert units
-    if (data.measurements.wspd) {
-      data.measurements.windSpeedKt = data.measurements.wspd * 1.94384; // m/s to knots
-    }
-    if (data.measurements.gst) {
-      data.measurements.gustKt = data.measurements.gst * 1.94384;
-    }
-    if (data.measurements.wvht) {
-      data.measurements.waveHeightFt = data.measurements.wvht * 3.28084; // m to feet
-    }
-    if (data.measurements.atmp) {
-      data.measurements.airTempF = (data.measurements.atmp * 9/5) + 32; // C to F
-    }
-    if (data.measurements.wtmp) {
-      data.measurements.waterTempF = (data.measurements.wtmp * 9/5) + 32;
-    }
-
-    return data;
-  }
-
-  // Get NWS forecast
-  async getNWSForecast(lat, lon) {
+      weatherData[header.toLowerCase()] = currentData[index]
+    })
+    
+    // Fetch wave data if available
     try {
-      // Get point data
-      const pointResponse = await fetch(`${this.nwsBaseUrl}/points/${lat},${lon}`);
-      const pointData = await pointResponse.json();
-
-      // Get forecast
-      const forecastResponse = await fetch(pointData.properties.forecast);
-      const forecastData = await forecastResponse.json();
-
-      // Get active alerts
-      const alertsResponse = await fetch(`${this.nwsBaseUrl}/alerts/active?point=${lat},${lon}`);
-      const alertsData = await alertsResponse.json();
-
-      return {
-        forecast: forecastData.properties.periods,
-        alerts: alertsData.features || []
-      };
-    } catch (error) {
-      console.error('Error fetching NWS data:', error);
-      return { forecast: [], alerts: [] };
+      const waveResponse = await fetch(`${NOAA_BUOY_API}/${stationId}.spec`)
+      const waveData = await waveResponse.text()
+      const waveLines = waveData.split('\n')
+      const waveHeaders = waveLines[0].replace('#', '').trim().split(/\s+/)
+      const currentWaveData = waveLines[2].trim().split(/\s+/)
+      
+      waveHeaders.forEach((header, index) => {
+        weatherData[`wave_${header.toLowerCase()}`] = currentWaveData[index]
+      })
+    } catch (waveError) {
+      console.log('Wave data not available for station', stationId)
     }
-  }
-
-  // Get tide data
-  async getTideData(lat, lon) {
-    // Find nearest tide station
-    const stations = {
-      '8728690': { lat: 30.404, lon: -87.211, name: 'Pensacola' },
-      '8735180': { lat: 30.250, lon: -88.075, name: 'Dauphin Island' },
-      '8761724': { lat: 29.263, lon: -89.957, name: 'Grand Isle' }
-    };
-
-    let nearestStation = null;
-    let minDistance = Infinity;
-
-    for (const [id, station] of Object.entries(stations)) {
-      const distance = this.calculateDistance(lat, lon, station.lat, station.lon);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestStation = { id, ...station };
-      }
-    }
-
-    try {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const params = new URLSearchParams({
-        station: nearestStation.id,
-        product: 'predictions',
-        begin_date: this.formatDate(now),
-        end_date: this.formatDate(tomorrow),
-        datum: 'MLLW',
-        time_zone: 'lst_ldt',
-        interval: 'hilo',
-        units: 'english',
-        format: 'json',
-        application: 'GulfCoastCharters'
-      });
-
-      const response = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params}`);
-      const data = await response.json();
-
-      return {
-        station: nearestStation,
-        predictions: data.predictions || []
-      };
-    } catch (error) {
-      console.error('Error fetching tide data:', error);
-      return null;
-    }
-  }
-
-  // Analyze weather conditions
-  analyzeWeather(buoyData, nwsData, tideData) {
-    const alerts = [];
-    let maxSeverity = null;
-
-    if (!buoyData) {
-      return { alerts: [], severity: null, summary: 'Weather data unavailable' };
-    }
-
-    const { measurements } = buoyData;
-
-    // Check wind speed
-    if (measurements.windSpeedKt) {
-      const severity = this.checkThreshold('wind', measurements.windSpeedKt);
-      if (severity) {
-        alerts.push({
-          type: 'wind',
-          severity: severity.severity,
-          icon: severity.icon,
-          message: `${severity.icon} ${severity.severity.toUpperCase()}: Sustained winds ${measurements.windSpeedKt.toFixed(0)} kt`,
-          details: `Wind gusts reaching ${measurements.gustKt?.toFixed(0) || 'N/A'} kt from ${measurements.wdir || 'variable'} degrees. Dangerous conditions for small craft.`,
-          recommendation: this.getWindRecommendation(measurements.windSpeedKt)
-        });
-        maxSeverity = this.compareSeverity(maxSeverity, severity.severity);
-      }
-    }
-
-    // Check wave height
-    if (measurements.waveHeightFt) {
-      const severity = this.checkThreshold('wave', measurements.waveHeightFt);
-      if (severity) {
-        alerts.push({
-          type: 'wave',
-          severity: severity.severity,
-          icon: severity.icon,
-          message: `${severity.icon} ${severity.severity.toUpperCase()}: Wave height ${measurements.waveHeightFt.toFixed(1)} ft`,
-          details: `Significant wave height with ${measurements.dpd || 'unknown'} second period. Rough seas expected.`,
-          recommendation: this.getWaveRecommendation(measurements.waveHeightFt)
-        });
-        maxSeverity = this.compareSeverity(maxSeverity, severity.severity);
-      }
-    }
-
-    // Check pressure trend (if we have historical data)
-    if (measurements.pres) {
-      // This would require storing historical pressure readings
-      // For now, we'll check absolute pressure
-      if (measurements.pres < 1000) {
-        alerts.push({
-          type: 'pressure',
-          severity: 'medium',
-          icon: '🌀',
-          message: `⚡ MEDIUM: Low pressure system (${measurements.pres.toFixed(1)} hPa)`,
-          details: 'Low pressure may indicate developing weather system. Monitor forecast closely.',
-          recommendation: 'Check marine forecast frequently. Be prepared to cancel trip if conditions deteriorate.'
-        });
-        maxSeverity = this.compareSeverity(maxSeverity, 'medium');
-      }
-    }
-
-    // Check NWS alerts
-    if (nwsData && nwsData.alerts && nwsData.alerts.length > 0) {
-      nwsData.alerts.forEach(alert => {
-        const alertSeverity = this.mapNWSSeverity(alert.properties.severity);
-        alerts.push({
-          type: 'nws_alert',
-          severity: alertSeverity,
-          icon: '⚠️',
-          message: `⚠️ ${alert.properties.event}`,
-          details: alert.properties.headline,
-          recommendation: alert.properties.instruction || 'Follow NWS guidance',
-          expires: alert.properties.expires
-        });
-        maxSeverity = this.compareSeverity(maxSeverity, alertSeverity);
-      });
-    }
-
-    // Generate summary
-    const summary = this.generateSummary(alerts, buoyData, nwsData);
-
+    
+    // Convert and clean data
     return {
-      alerts,
-      severity: maxSeverity,
-      summary,
-      buoyData,
-      nwsData,
-      tideData
-    };
-  }
-
-  // Check if value exceeds threshold
-  checkThreshold(type, value) {
-    const thresholds = {
-      wind: { key: 'windSpeed', thresholds: ALERT_THRESHOLDS },
-      wave: { key: 'waveHeight', thresholds: ALERT_THRESHOLDS }
-    };
-
-    const config = thresholds[type];
-    if (!config) return null;
-
-    // Check from most severe to least
-    for (const [level, threshold] of Object.entries(config.thresholds)) {
-      if (value >= threshold[config.key]) {
-        return threshold;
-      }
+      station_id: stationId,
+      timestamp: new Date().toISOString(),
+      wind_speed_kt: parseFloat(weatherData.wspd) || 0,
+      wind_gust_kt: parseFloat(weatherData.gst) || 0,
+      wind_direction: parseFloat(weatherData.wdir) || 0,
+      wave_height_ft: parseFloat(weatherData.wvht) * 3.28084 || 0, // Convert meters to feet
+      wave_period_sec: parseFloat(weatherData.dpd) || 0,
+      air_pressure_hpa: parseFloat(weatherData.pres) || 1013,
+      air_temp_f: parseFloat(weatherData.atmp) * 9/5 + 32 || 0, // Convert C to F
+      water_temp_f: parseFloat(weatherData.wtmp) * 9/5 + 32 || 0,
+      visibility_nm: parseFloat(weatherData.vis) * 0.539957 || 10, // Convert km to nautical miles
     }
-
-    return null;
-  }
-
-  // Compare severity levels
-  compareSeverity(current, newSeverity) {
-    const levels = { critical: 4, high: 3, medium: 2, low: 1 };
-    if (!current) return newSeverity;
-    return levels[newSeverity] > levels[current] ? newSeverity : current;
-  }
-
-  // Map NWS severity to our system
-  mapNWSSeverity(nwsSeverity) {
-    const mapping = {
-      'Extreme': 'critical',
-      'Severe': 'high',
-      'Moderate': 'medium',
-      'Minor': 'low',
-      'Unknown': 'medium'
-    };
-    return mapping[nwsSeverity] || 'medium';
-  }
-
-  // Generate human-readable summary
-  generateSummary(alerts, buoyData, nwsData) {
-    if (alerts.length === 0) {
-      return 'Weather conditions are within normal parameters. Safe for boating.';
-    }
-
-    const criticalAlerts = alerts.filter(a => a.severity === 'critical');
-    const highAlerts = alerts.filter(a => a.severity === 'high');
-
-    if (criticalAlerts.length > 0) {
-      return `DANGEROUS CONDITIONS: ${criticalAlerts.map(a => a.message).join(', ')}. STRONGLY recommend canceling or postponing trip.`;
-    }
-
-    if (highAlerts.length > 0) {
-      return `HAZARDOUS CONDITIONS: ${highAlerts.map(a => a.message).join(', ')}. Use extreme caution or consider rescheduling.`;
-    }
-
-    return `Moderate weather alerts in effect. ${alerts[0].message}. Review conditions carefully before departing.`;
-  }
-
-  // Get wind recommendations
-  getWindRecommendation(windSpeed) {
-    if (windSpeed >= 35) return 'DO NOT DEPART. Dangerous conditions. Cancel trip immediately.';
-    if (windSpeed >= 25) return 'Strong winds. Small craft advisory. Only experienced captains in larger vessels.';
-    if (windSpeed >= 20) return 'Choppy conditions expected. Brief customers on rough seas.';
-    if (windSpeed >= 15) return 'Moderate winds. Good weather awareness required.';
-    return 'Favorable wind conditions.';
-  }
-
-  // Get wave recommendations
-  getWaveRecommendation(waveHeight) {
-    if (waveHeight >= 8) return 'EXTREMELY ROUGH SEAS. Cancel trip. Unsafe for charter operations.';
-    if (waveHeight >= 5) return 'Very rough seas. High risk of seasickness. Consider rescheduling.';
-    if (waveHeight >= 3) return 'Choppy seas. Warn passengers about rough conditions.';
-    if (waveHeight >= 2) return 'Moderate seas. Suitable for experienced boaters.';
-    return 'Calm seas. Excellent boating conditions.';
-  }
-
-  // Send alert emails
-  async sendAlertEmails(alerts, recipientType) {
-    for (const alert of alerts) {
-      try {
-        const recipient = alert[recipientType] || alert.user || alert.captain;
-        const emailHtml = this.generateAlertEmail(alert, recipientType);
-
-        await emailTransporter.sendMail({
-          from: '"Gulf Coast Charters Weather Alerts" <alerts@gulfcoastcharters.com>',
-          to: recipient.email,
-          subject: `${alert.analysis.severity?.toUpperCase() || 'WEATHER'} Alert: ${this.getAlertSubject(alert)}`,
-          html: emailHtml
-        });
-
-        // Log email sent
-        await supabase.from('notification_log').insert({
-          user_id: recipient.userId || recipient.captainId,
-          type: 'weather_alert',
-          severity: alert.analysis.severity,
-          channel: 'email',
-          sent_at: new Date().toISOString()
-        });
-
-        console.log(`✅ Weather alert email sent to ${recipient.email}`);
-      } catch (error) {
-        console.error(`❌ Failed to send email to ${recipient.email}:`, error);
-      }
+  } catch (error) {
+    console.error('Error fetching NOAA data:', error)
+    // Return default safe conditions if API fails
+    return {
+      station_id: stationId,
+      timestamp: new Date().toISOString(),
+      wind_speed_kt: 0,
+      wind_gust_kt: 0,
+      wind_direction: 0,
+      wave_height_ft: 0,
+      wave_period_sec: 0,
+      air_pressure_hpa: 1013,
+      air_temp_f: 75,
+      water_temp_f: 72,
+      visibility_nm: 10,
+      api_error: true
     }
   }
+}
 
-  // Generate alert email HTML
-  generateAlertEmail(alert, recipientType) {
-    const recipient = alert[recipientType] || alert.user || alert.captain;
-    const { analysis } = alert;
-    const severityColor = this.getSeverityColor(analysis.severity);
+/**
+ * Analyze weather conditions and determine alert level
+ */
+function analyzeWeatherConditions(weatherData) {
+  const conditions = []
+  let alertLevel = ALERT_LEVELS.SAFE
+  
+  // Check wind speed
+  if (weatherData.wind_speed_kt >= WEATHER_THRESHOLDS.wind_speed_danger) {
+    conditions.push({
+      type: 'wind',
+      severity: 'danger',
+      message: `Dangerous winds: ${weatherData.wind_speed_kt} kt sustained${weatherData.wind_gust_kt > weatherData.wind_speed_kt ? `, gusting to ${weatherData.wind_gust_kt} kt` : ''}`
+    })
+    alertLevel = ALERT_LEVELS.DANGER
+  } else if (weatherData.wind_speed_kt >= WEATHER_THRESHOLDS.wind_speed_warning) {
+    conditions.push({
+      type: 'wind',
+      severity: 'warning',
+      message: `Strong winds: ${weatherData.wind_speed_kt} kt sustained`
+    })
+    if (alertLevel !== ALERT_LEVELS.DANGER) alertLevel = ALERT_LEVELS.WARNING
+  }
+  
+  // Check wave height
+  if (weatherData.wave_height_ft >= WEATHER_THRESHOLDS.wave_height_danger) {
+    conditions.push({
+      type: 'waves',
+      severity: 'danger',
+      message: `Dangerous seas: ${weatherData.wave_height_ft.toFixed(1)} ft waves at ${weatherData.wave_period_sec} seconds`
+    })
+    alertLevel = ALERT_LEVELS.DANGER
+  } else if (weatherData.wave_height_ft >= WEATHER_THRESHOLDS.wave_height_warning) {
+    conditions.push({
+      type: 'waves',
+      severity: 'warning',
+      message: `Rough seas: ${weatherData.wave_height_ft.toFixed(1)} ft waves`
+    })
+    if (alertLevel === ALERT_LEVELS.SAFE) alertLevel = ALERT_LEVELS.WARNING
+  }
+  
+  // Check visibility
+  if (weatherData.visibility_nm < WEATHER_THRESHOLDS.visibility_warning) {
+    conditions.push({
+      type: 'visibility',
+      severity: 'warning',
+      message: `Poor visibility: ${weatherData.visibility_nm.toFixed(1)} nautical miles`
+    })
+    if (alertLevel === ALERT_LEVELS.SAFE) alertLevel = ALERT_LEVELS.CAUTION
+  }
+  
+  // Generate recommendations based on conditions
+  const recommendations = generateRecommendations(alertLevel, conditions, weatherData)
+  
+  // Create summary
+  let summary = 'Current conditions are '
+  switch (alertLevel) {
+    case ALERT_LEVELS.DANGER:
+      summary += 'DANGEROUS for charter operations. '
+      break
+    case ALERT_LEVELS.WARNING:
+      summary += 'HAZARDOUS and require extreme caution. '
+      break
+    case ALERT_LEVELS.CAUTION:
+      summary += 'marginal and require caution. '
+      break
+    default:
+      summary += 'favorable for charter operations. '
+  }
+  
+  if (conditions.length > 0) {
+    summary += conditions.map(c => c.message).join('. ') + '.'
+  }
+  
+  return {
+    alertLevel,
+    conditions,
+    recommendations,
+    summary,
+    details: weatherData
+  }
+}
 
-    return `
+/**
+ * Generate safety recommendations based on conditions
+ */
+function generateRecommendations(alertLevel, conditions, weatherData) {
+  const recommendations = []
+  
+  switch (alertLevel) {
+    case ALERT_LEVELS.DANGER:
+      recommendations.push('STRONGLY RECOMMEND CANCELING OR RESCHEDULING')
+      recommendations.push('Conditions exceed safe operating limits for most vessels')
+      recommendations.push('Contact captain immediately to discuss options')
+      break
+      
+    case ALERT_LEVELS.WARNING:
+      recommendations.push('Consider rescheduling if you have health conditions or get seasick easily')
+      recommendations.push('Only experienced captains should operate in these conditions')
+      recommendations.push('Expect rough seas and potential trip modifications')
+      break
+      
+    case ALERT_LEVELS.CAUTION:
+      recommendations.push('Conditions are fishable but may be uncomfortable')
+      recommendations.push('Take seasickness medication if prone to motion sickness')
+      recommendations.push('Captain may modify trip plans for safety')
+      break
+      
+    default:
+      recommendations.push('Conditions look great for your trip!')
+      recommendations.push('Remember sunscreen and stay hydrated')
+  }
+  
+  // Add specific recommendations based on conditions
+  const hasHighWind = conditions.some(c => c.type === 'wind' && c.severity === 'danger')
+  const hasHighWaves = conditions.some(c => c.type === 'waves' && c.severity === 'danger')
+  
+  if (hasHighWind && hasHighWaves) {
+    recommendations.push('Small craft advisory likely in effect')
+  }
+  
+  if (weatherData.visibility_nm < 2) {
+    recommendations.push('Reduced visibility may delay departure')
+  }
+  
+  return recommendations
+}
+
+/**
+ * Send weather alert email
+ */
+async function sendWeatherAlert(booking, weatherData, analysis, supabaseClient) {
+  try {
+    const emailHtml = generateAlertEmailHtml(booking, weatherData, analysis)
+    
+    // Send via SMTP (configure your provider)
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('SENDGRID_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: booking.users.email }],
+        }],
+        from: {
+          email: 'alerts@gulfcoastcharters.com',
+          name: 'Gulf Coast Charters Weather Service'
+        },
+        subject: `⚠️ ${analysis.alertLevel.toUpperCase()} WEATHER ALERT: Your trip on ${formatDate(booking.trip_date)}`,
+        content: [{
+          type: 'text/html',
+          value: emailHtml
+        }]
+      })
+    })
+    
+    return response.ok
+    
+  } catch (error) {
+    console.error('Error sending email:', error)
+    return false
+  }
+}
+
+/**
+ * Generate HTML email for weather alert
+ */
+function generateAlertEmailHtml(booking, weatherData, analysis) {
+  const alertColor = {
+    [ALERT_LEVELS.DANGER]: '#dc2626',
+    [ALERT_LEVELS.WARNING]: '#f59e0b',
+    [ALERT_LEVELS.CAUTION]: '#3b82f6',
+    [ALERT_LEVELS.SAFE]: '#10b981'
+  }[analysis.alertLevel]
+  
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -594,260 +440,128 @@ class WeatherAlertService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weather Alert</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); padding: 30px; text-align: center;">
-              <h1 style="margin: 0; color: white; font-size: 28px;">⚠️ Weather Alert</h1>
-              <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">Gulf Coast Charters</p>
-            </td>
-          </tr>
-
-          <!-- Severity Badge -->
-          <tr>
-            <td style="padding: 20px; text-align: center; background-color: ${severityColor};">
-              <h2 style="margin: 0; color: white; font-size: 24px; text-transform: uppercase;">
-                ${analysis.severity || 'Weather'} ALERT
-              </h2>
-            </td>
-          </tr>
-
-          <!-- Greeting -->
-          <tr>
-            <td style="padding: 30px 30px 20px 30px;">
-              <p style="margin: 0; font-size: 16px; color: #374151;">
-                Hi ${recipient.name},
-              </p>
-            </td>
-          </tr>
-
-          <!-- Summary -->
-          <tr>
-            <td style="padding: 0 30px 20px 30px;">
-              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px;">
-                <p style="margin: 0; font-size: 16px; color: #92400e; font-weight: 600;">
-                  ${analysis.summary}
-                </p>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Alerts -->
-          ${analysis.alerts.map(a => `
-            <tr>
-              <td style="padding: 0 30px 15px 30px;">
-                <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f9fafb;">
-                  <h3 style="margin: 0 0 10px 0; color: #111827; font-size: 18px;">
-                    ${a.icon} ${a.message}
-                  </h3>
-                  <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
-                    ${a.details}
-                  </p>
-                  <div style="background-color: #dbeafe; border-left: 3px solid #3b82f6; padding: 12px; border-radius: 4px;">
-                    <p style="margin: 0; color: #1e40af; font-size: 14px; font-weight: 500;">
-                      📋 Recommendation: ${a.recommendation}
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          `).join('')}
-
-          <!-- Current Conditions -->
-          ${analysis.buoyData ? `
-            <tr>
-              <td style="padding: 20px 30px;">
-                <h3 style="margin: 0 0 15px 0; color: #111827; font-size: 18px;">
-                  📊 Current Conditions (${analysis.buoyData.buoy.name} Buoy)
-                </h3>
-                <table width="100%" cellpadding="8" style="border-collapse: collapse;">
-                  ${analysis.buoyData.measurements.windSpeedKt ? `
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                      <td style="color: #6b7280;">Wind:</td>
-                      <td style="color: #111827; font-weight: 600; text-align: right;">
-                        ${analysis.buoyData.measurements.windSpeedKt.toFixed(0)} kt 
-                        (gusts ${analysis.buoyData.measurements.gustKt?.toFixed(0) || 'N/A'} kt)
-                      </td>
-                    </tr>
-                  ` : ''}
-                  ${analysis.buoyData.measurements.waveHeightFt ? `
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                      <td style="color: #6b7280;">Waves:</td>
-                      <td style="color: #111827; font-weight: 600; text-align: right;">
-                        ${analysis.buoyData.measurements.waveHeightFt.toFixed(1)} ft
-                      </td>
-                    </tr>
-                  ` : ''}
-                  ${analysis.buoyData.measurements.pres ? `
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                      <td style="color: #6b7280;">Pressure:</td>
-                      <td style="color: #111827; font-weight: 600; text-align: right;">
-                        ${analysis.buoyData.measurements.pres.toFixed(1)} hPa
-                      </td>
-                    </tr>
-                  ` : ''}
-                  ${analysis.buoyData.measurements.waterTempF ? `
-                    <tr>
-                      <td style="color: #6b7280;">Water Temp:</td>
-                      <td style="color: #111827; font-weight: 600; text-align: right;">
-                        ${analysis.buoyData.measurements.waterTempF.toFixed(0)}°F
-                      </td>
-                    </tr>
-                  ` : ''}
-                </table>
-              </td>
-            </tr>
-          ` : ''}
-
-          <!-- Trip Info (for users) -->
-          ${recipientType === 'user' && recipient.tripTitle ? `
-            <tr>
-              <td style="padding: 20px 30px; background-color: #f9fafb;">
-                <h3 style="margin: 0 0 10px 0; color: #111827; font-size: 18px;">🎣 Your Upcoming Trip</h3>
-                <p style="margin: 0 0 5px 0; color: #374151;">
-                  <strong>${recipient.tripTitle}</strong>
-                </p>
-                <p style="margin: 0; color: #6b7280; font-size: 14px;">
-                  Scheduled for: ${new Date(recipient.tripDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </td>
-            </tr>
-          ` : ''}
-
-          <!-- Action Buttons -->
-          <tr>
-            <td style="padding: 30px; text-align: center;">
-              <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="background-color: #0ea5e9; border-radius: 6px; padding: 12px 30px;">
-                    <a href="https://gulfcoastcharters.com/weather" 
-                       style="color: white; text-decoration: none; font-weight: 600; font-size: 16px;">
-                      View Full Forecast
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              ${recipientType === 'user' ? `
-                <p style="margin: 15px 0 0 0;">
-                  <a href="https://gulfcoastcharters.com/bookings" 
-                     style="color: #0ea5e9; text-decoration: none; font-size: 14px;">
-                    Manage My Booking →
-                  </a>
-                </p>
-              ` : ''}
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 20px 30px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 12px; text-align: center;">
-                This alert was automatically generated based on NOAA data.
-              </p>
-              <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Gulf Coast Charters | Weather Alert System<br>
-                <a href="https://gulfcoastcharters.com/settings/notifications" 
-                   style="color: #0ea5e9; text-decoration: none;">
-                  Update notification preferences
-                </a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  
+  <div style="background: ${alertColor}; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px;">⚠️ ${analysis.alertLevel.toUpperCase()} WEATHER ALERT</h1>
+    <p style="margin: 10px 0 0 0; font-size: 16px;">For your trip on ${formatDate(booking.trip_date)}</p>
+  </div>
+  
+  <div style="background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
+    <h2 style="color: ${alertColor}; margin-top: 0;">Hi ${booking.users.first_name},</h2>
+    
+    <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <h3 style="margin-top: 0; color: ${alertColor};">Current Conditions</h3>
+      <p style="font-size: 16px; font-weight: 500; margin: 10px 0;">${analysis.summary}</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Wind Speed:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${weatherData.wind_speed_kt} kt ${weatherData.wind_gust_kt > weatherData.wind_speed_kt ? `(gusting ${weatherData.wind_gust_kt} kt)` : ''}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Wave Height:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${weatherData.wave_height_ft.toFixed(1)} ft @ ${weatherData.wave_period_sec} sec</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Visibility:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${weatherData.visibility_nm.toFixed(1)} nm</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Air Pressure:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${weatherData.air_pressure_hpa} hPa</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;"><strong>Water Temp:</strong></td>
+          <td style="padding: 8px;">${weatherData.water_temp_f.toFixed(1)}°F</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <h3 style="margin-top: 0; color: #1f2937;">Our Recommendations</h3>
+      <ul style="margin: 0; padding-left: 20px;">
+        ${analysis.recommendations.map(r => `<li style="margin: 5px 0;">${r}</li>`).join('')}
+      </ul>
+    </div>
+    
+    <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <h3 style="margin-top: 0; color: #1f2937;">Your Booking Details</h3>
+      <p><strong>Captain:</strong> ${booking.captains.business_name}</p>
+      <p><strong>Departure:</strong> ${booking.trips.departure_location}</p>
+      <p><strong>Trip Type:</strong> ${booking.trips.trip_type}</p>
+      <p><strong>Duration:</strong> ${booking.trips.duration_hours} hours</p>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="https://gulfcoastcharters.com/bookings/${booking.id}" style="display: inline-block; background: ${alertColor}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">Manage My Booking</a>
+      
+      <a href="https://gulfcoastcharters.com/weather" style="display: inline-block; background: #6b7280; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-left: 10px;">View Full Forecast</a>
+    </div>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
+      <p>This is an automated weather safety alert from Gulf Coast Charters.</p>
+      <p>Data source: NOAA Buoy ${weatherData.station_id} • Updated: ${formatTime(weatherData.timestamp)}</p>
+      <p style="margin-top: 15px;">
+        <a href="https://gulfcoastcharters.com/preferences" style="color: #3b82f6; text-decoration: none;">Update Alert Preferences</a> • 
+        <a href="https://gulfcoastcharters.com/unsubscribe" style="color: #3b82f6; text-decoration: none;">Unsubscribe</a>
+      </p>
+    </div>
+  </div>
 </body>
 </html>
-    `;
-  }
-
-  // Get alert subject line
-  getAlertSubject(alert) {
-    const recipient = alert.user || alert.captain;
-    if (alert.analysis.severity === 'critical') {
-      return 'DANGEROUS CONDITIONS - Trip Cancellation Recommended';
-    }
-    if (alert.analysis.severity === 'high') {
-      return 'Hazardous Weather Expected for Your Trip';
-    }
-    return 'Weather Advisory for Your Upcoming Trip';
-  }
-
-  // Get severity color
-  getSeverityColor(severity) {
-    const colors = {
-      critical: '#DC2626',
-      high: '#EA580C',
-      medium: '#F59E0B',
-      low: '#3B82F6'
-    };
-    return colors[severity] || '#6B7280';
-  }
-
-  // Send push notifications
-  async sendPushNotifications(alerts, recipientType) {
-    // Implementation would depend on push notification service (FCM, OneSignal, etc.)
-    console.log(`📱 Would send ${alerts.length} push notifications to ${recipientType}s`);
-  }
-
-  // Helper: Calculate distance between coordinates
-  calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 3440.065; // Earth radius in nautical miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  // Helper: Format date for NOAA API
-  formatDate(date) {
-    return date.toISOString().split('T')[0].replace(/-/g, '');
-  }
+  `
 }
 
-// Export handler for serverless function
-export async function handler(req) {
-  const weatherService = new WeatherAlertService();
+/**
+ * Determine nearest NOAA station based on location
+ */
+function determineNearestStation(location) {
+  // Simple mapping - in production, use actual lat/lon distance calculation
+  const locationMap = {
+    'orange beach': NOAA_STATIONS.orange_beach,
+    'gulf shores': NOAA_STATIONS.orange_beach,
+    'mobile': NOAA_STATIONS.mobile_bay,
+    'dauphin island': NOAA_STATIONS.dauphin_island,
+    'pensacola': NOAA_STATIONS.pensacola,
+    'biloxi': NOAA_STATIONS.mississippi_sound,
+    'gulfport': NOAA_STATIONS.mississippi_sound,
+  }
   
-  try {
-    const result = await weatherService.checkWeatherAlerts();
-    
-    return new Response(
-      JSON.stringify(result),
-      { 
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+  const locationLower = (location || '').toLowerCase()
+  for (const [key, station] of Object.entries(locationMap)) {
+    if (locationLower.includes(key)) {
+      return station
+    }
   }
+  
+  // Default to Orange Beach
+  return NOAA_STATIONS.orange_beach
 }
 
-// Cron job configuration (run every hour)
-// In Supabase: Create a pg_cron job or use Vercel Cron
-// Schedule: 0 * * * * (every hour)
+/**
+ * Format date for display
+ */
+function formatDate(dateString) {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
 
-export default WeatherAlertService;
+/**
+ * Format time for display
+ */
+function formatTime(dateString) {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
+}

@@ -1,715 +1,945 @@
-// Community Platform with Points System
-// File: /api/community.js
+/**
+ * Community Points & Gamification System
+ * Complete implementation for fishing community engagement
+ * Includes points, badges, streaks, leaderboards, and trust levels
+ */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 // Points configuration
-const POINTS_CONFIG = {
+export const POINT_ACTIONS = {
   // Content creation
   CREATE_FISHING_REPORT: 25,
   CREATE_FISHING_REPORT_WITH_PHOTO: 35,
   CREATE_FISHING_REPORT_WITH_VIDEO: 50,
-  CREATE_SPOT_PIN: 15,
-  CREATE_VERIFIED_SPOT: 30,
+  CREATE_FISHING_SPOT: 20,
+  CREATE_TECHNIQUE_GUIDE: 40,
+  CREATE_GEAR_REVIEW: 30,
   
   // Engagement
+  DAILY_CHECK_IN: 3,
   COMMENT_ON_POST: 5,
   HELPFUL_COMMENT: 10,
-  UPVOTE_RECEIVED: 2,
-  ANSWER_QUESTION: 15,
-  BEST_ANSWER_SELECTED: 50,
+  BEST_ANSWER: 50,
+  SHARE_POST: 8,
   
-  // Community help
-  HELP_NEW_CAPTAIN: 25,
-  MENTOR_SESSION: 100,
-  VERIFY_SPOT: 20,
-  REPORT_HAZARD: 30,
-  SAFETY_TIP: 15,
+  // Achievements
+  FIRST_POST: 50,
+  STREAK_7_DAYS: 50,
+  STREAK_30_DAYS: 200,
+  STREAK_100_DAYS: 500,
   
-  // Consistency bonuses
-  DAILY_CHECK_IN: 3,
-  WEEKLY_STREAK_3: 25,
-  WEEKLY_STREAK_5: 50,
-  WEEKLY_STREAK_10: 100,
-  MONTHLY_ACTIVE_30_DAYS: 200,
+  // Community building
+  REFER_NEW_USER: 100,
+  ORGANIZE_TOURNAMENT: 200,
+  MENTOR_NEW_MEMBER: 75,
   
-  // Quality bonuses
-  POPULAR_POST_100_VIEWS: 10,
-  POPULAR_POST_500_VIEWS: 25,
-  POPULAR_POST_1000_VIEWS: 50,
-  FEATURED_POST: 100,
+  // Verification
+  VERIFY_EMAIL: 20,
+  COMPLETE_PROFILE: 30,
+  CONNECT_SOCIAL: 15,
   
-  // Training & certifications
-  COMPLETE_TRAINING_COURSE: 75,
-  EARN_CERTIFICATION: 100,
-  RENEW_LICENSE_EARLY: 50,
-  
-  // Penalties (negative points)
-  FLAGGED_CONTENT: -25,
-  REMOVED_POST: -50,
-  WARNING_ISSUED: -100,
-  SPAM_VIOLATION: -200
-};
+  // Captain specific
+  CAPTAIN_TRIP_REPORT: 40,
+  CAPTAIN_SAFETY_TIP: 35,
+  CAPTAIN_WEATHER_UPDATE: 25,
+}
+
+// Trust levels configuration
+export const TRUST_LEVELS = {
+  NEW_MEMBER: {
+    level: 0,
+    minPoints: 0,
+    name: 'New Member',
+    permissions: ['read', 'limited_post'],
+    postApprovalRequired: true,
+    dailyPostLimit: 2,
+    uploadSizeLimit: 5, // MB
+  },
+  MEMBER: {
+    level: 1,
+    minPoints: 100,
+    name: 'Member',
+    permissions: ['read', 'post', 'comment', 'upload'],
+    postApprovalRequired: false,
+    dailyPostLimit: 10,
+    uploadSizeLimit: 10,
+  },
+  REGULAR: {
+    level: 2,
+    minPoints: 500,
+    name: 'Regular',
+    permissions: ['read', 'post', 'comment', 'upload', 'edit_own', 'delete_own'],
+    postApprovalRequired: false,
+    dailyPostLimit: 25,
+    uploadSizeLimit: 20,
+  },
+  TRUSTED: {
+    level: 3,
+    minPoints: 2000,
+    name: 'Trusted Member',
+    permissions: ['read', 'post', 'comment', 'upload', 'edit_own', 'delete_own', 'feature_posts', 'create_events'],
+    postApprovalRequired: false,
+    dailyPostLimit: -1, // unlimited
+    uploadSizeLimit: 50,
+  },
+  VETERAN: {
+    level: 4,
+    minPoints: 5000,
+    name: 'Community Veteran',
+    permissions: ['read', 'post', 'comment', 'upload', 'edit_own', 'delete_own', 'feature_posts', 'create_events', 'moderate', 'ban_users'],
+    postApprovalRequired: false,
+    dailyPostLimit: -1,
+    uploadSizeLimit: 100,
+  },
+}
 
 // Badge definitions
-const BADGES = {
-  // Engagement badges
-  FIRST_POST: {
-    id: 'first_post',
-    name: 'Breaking the Ice',
+export const BADGES = {
+  // Posting badges
+  BREAKING_THE_ICE: {
+    id: 'breaking_ice',
+    name: '🎣 Breaking the Ice',
     description: 'Posted your first fishing report',
+    condition: 'posts_count >= 1',
+    points: 25,
     icon: '🎣',
-    points_required: 0,
-    trigger: 'first_post'
   },
-  REPORTER_10: {
-    id: 'reporter_10',
-    name: 'Reporter',
+  STORYTELLER: {
+    id: 'storyteller',
+    name: '📖 Storyteller',
     description: 'Posted 10 fishing reports',
-    icon: '📝',
-    posts_required: 10
+    condition: 'posts_count >= 10',
+    points: 50,
+    icon: '📖',
   },
-  CHRONICLER_50: {
-    id: 'chronicler_50',
-    name: 'Chronicler',
+  CHRONICLER: {
+    id: 'chronicler',
+    name: '📚 Chronicler',
     description: 'Posted 50 fishing reports',
+    condition: 'posts_count >= 50',
+    points: 100,
     icon: '📚',
-    posts_required: 50
   },
-  LEGEND_200: {
-    id: 'legend_200',
-    name: 'Legend',
+  LEGEND: {
+    id: 'legend',
+    name: '🏆 Legend',
     description: 'Posted 200 fishing reports',
+    condition: 'posts_count >= 200',
+    points: 500,
     icon: '🏆',
-    posts_required: 200
   },
   
-  // Helpful badges
-  HELPER_25: {
-    id: 'helper_25',
-    name: 'Helper',
+  // Engagement badges
+  CONVERSATIONALIST: {
+    id: 'conversationalist',
+    name: '💬 Conversationalist',
+    description: 'Made 50 comments',
+    condition: 'comments_count >= 50',
+    points: 30,
+    icon: '💬',
+  },
+  HELPER: {
+    id: 'helper',
+    name: '🤝 Helper',
     description: 'Received 25 helpful votes',
+    condition: 'helpful_votes >= 25',
+    points: 75,
     icon: '🤝',
-    helpful_votes_required: 25
   },
-  GUIDE_100: {
-    id: 'guide_100',
-    name: 'Guide',
+  MENTOR: {
+    id: 'mentor',
+    name: '🎓 Mentor',
     description: 'Received 100 helpful votes',
-    icon: '🎯',
-    helpful_votes_required: 100
-  },
-  MENTOR_500: {
-    id: 'mentor_500',
-    name: 'Mentor',
-    description: 'Received 500 helpful votes',
-    icon: '👨‍🏫',
-    helpful_votes_required: 500
+    condition: 'helpful_votes >= 100',
+    points: 200,
+    icon: '🎓',
   },
   
-  // Community badges
-  ACTIVE_30: {
-    id: 'active_30',
-    name: 'Active Member',
-    description: 'Active for 30 consecutive days',
-    icon: '⭐',
-    days_active: 30
+  // Streak badges
+  WEEK_WARRIOR: {
+    id: 'week_warrior',
+    name: '🔥 Week Warrior',
+    description: 'Maintained a 7-day streak',
+    condition: 'current_streak >= 7',
+    points: 50,
+    icon: '🔥',
   },
-  VETERAN_180: {
-    id: 'veteran_180',
-    name: 'Community Veteran',
-    description: 'Active for 180 consecutive days',
-    icon: '👑',
-    days_active: 180
+  MONTHLY_MASTER: {
+    id: 'monthly_master',
+    name: '📅 Monthly Master',
+    description: 'Maintained a 30-day streak',
+    condition: 'current_streak >= 30',
+    points: 200,
+    icon: '📅',
   },
-  OG_365: {
-    id: 'og_365',
-    name: 'OG Captain',
-    description: 'Active for 365 consecutive days',
-    icon: '🎖️',
-    days_active: 365
+  CENTURY_CLUB: {
+    id: 'century_club',
+    name: '💯 Century Club',
+    description: 'Maintained a 100-day streak',
+    condition: 'current_streak >= 100',
+    points: 500,
+    icon: '💯',
   },
   
-  // Points milestones
-  POINTS_100: {
-    id: 'points_100',
-    name: 'Getting Started',
-    description: 'Earned 100 points',
-    icon: '🌟',
-    points_required: 100
+  // Activity badges
+  EARLY_BIRD: {
+    id: 'early_bird',
+    name: '🌅 Early Bird',
+    description: 'Active member for 30 days',
+    condition: 'days_active >= 30',
+    points: 40,
+    icon: '🌅',
   },
-  POINTS_500: {
-    id: 'points_500',
-    name: 'Contributor',
-    description: 'Earned 500 points',
-    icon: '💫',
-    points_required: 500
-  },
-  POINTS_1000: {
-    id: 'points_1000',
-    name: 'Expert',
-    description: 'Earned 1,000 points',
+  REGULAR_FIXTURE: {
+    id: 'regular_fixture',
+    name: '⭐ Regular Fixture',
+    description: 'Active member for 90 days',
+    condition: 'days_active >= 90',
+    points: 100,
     icon: '⭐',
-    points_required: 1000
   },
-  POINTS_5000: {
-    id: 'points_5000',
-    name: 'Master Captain',
-    description: 'Earned 5,000 points',
-    icon: '🏅',
-    points_required: 5000
-  },
-  POINTS_10000: {
-    id: 'points_10000',
-    name: 'Elite',
-    description: 'Earned 10,000 points',
+  COMMUNITY_VETERAN: {
+    id: 'community_veteran',
+    name: '👑 Community Veteran',
+    description: 'Active member for 180 days',
+    condition: 'days_active >= 180',
+    points: 250,
     icon: '👑',
-    points_required: 10000
   },
   
   // Special badges
-  SAFETY_HERO: {
-    id: 'safety_hero',
-    name: 'Safety Hero',
-    description: 'Reported 10 hazards to keep the community safe',
-    icon: '🦸',
-    hazards_reported: 10
+  PHOTOGRAPHER: {
+    id: 'photographer',
+    name: '📸 Photographer',
+    description: 'Shared 50 photos',
+    condition: 'photos_count >= 50',
+    points: 60,
+    icon: '📸',
   },
-  SPOT_MASTER: {
-    id: 'spot_master',
-    name: 'Spot Master',
-    description: 'Saved 100 fishing spots',
+  VIDEOGRAPHER: {
+    id: 'videographer',
+    name: '🎥 Videographer',
+    description: 'Shared 20 videos',
+    condition: 'videos_count >= 20',
+    points: 100,
+    icon: '🎥',
+  },
+  TOURNAMENT_CHAMPION: {
+    id: 'tournament_champion',
+    name: '🥇 Tournament Champion',
+    description: 'Won a community tournament',
+    condition: 'tournaments_won >= 1',
+    points: 300,
+    icon: '🥇',
+  },
+  WEATHER_WATCHER: {
+    id: 'weather_watcher',
+    name: '🌦️ Weather Watcher',
+    description: 'Shared 25 weather updates',
+    condition: 'weather_updates >= 25',
+    points: 50,
+    icon: '🌦️',
+  },
+  SPOT_EXPLORER: {
+    id: 'spot_explorer',
+    name: '📍 Spot Explorer',
+    description: 'Shared 10 fishing spots',
+    condition: 'spots_shared >= 10',
+    points: 80,
     icon: '📍',
-    spots_saved: 100
   },
-  TEACHER: {
-    id: 'teacher',
-    name: 'Teacher',
-    description: 'Answered 50 questions',
-    icon: '🎓',
-    questions_answered: 50
+  GEAR_GURU: {
+    id: 'gear_guru',
+    name: '🎣 Gear Guru',
+    description: 'Posted 15 gear reviews',
+    condition: 'gear_reviews >= 15',
+    points: 90,
+    icon: '🎣',
+  },
+  CAPTAIN: {
+    id: 'captain',
+    name: '⚓ Captain',
+    description: 'Verified charter captain',
+    condition: 'is_captain === true',
+    points: 200,
+    icon: '⚓',
+  },
+}
+
+/**
+ * Main points management class
+ */
+export class PointsManager {
+  constructor(userId) {
+    this.userId = userId
+    this.userStats = null
   }
-};
 
-// Trust levels
-const TRUST_LEVELS = {
-  1: { name: 'New Member', points: 0, privileges: ['post_with_moderation', 'comment', 'upvote'] },
-  2: { name: 'Member', points: 100, privileges: ['post', 'comment', 'upvote', 'create_pins'] },
-  3: { name: 'Regular', points: 500, privileges: ['post', 'comment', 'upvote', 'create_pins', 'edit_own_posts', 'flag_content'] },
-  4: { name: 'Trusted', points: 2000, privileges: ['all', 'mentor', 'verify_spots', 'feature_posts'] },
-  5: { name: 'Veteran', points: 5000, privileges: ['all', 'mentor', 'verify_spots', 'feature_posts', 'moderate_comments'] }
-};
-
-class CommunityService {
-  
-  // Award points for an action
-  async awardPoints(userId, action, metadata = {}) {
-    const pointsEarned = POINTS_CONFIG[action];
-    if (!pointsEarned) {
-      console.warn(`Unknown action: ${action}`);
-      return { success: false, error: 'Invalid action' };
-    }
-
+  /**
+   * Award points for an action
+   */
+  async awardPoints(action, metadata = {}) {
     try {
-      // Get current user stats
-      const { data: userStats } = await supabase
-        .from('user_stats')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (!userStats) {
-        // Create new stats record
-        await supabase.from('user_stats').insert({
-          user_id: userId,
-          total_points: 0,
-          current_streak: 0,
-          longest_streak: 0
-        });
+      // Validate action
+      if (!POINT_ACTIONS[action]) {
+        throw new Error(`Invalid action: ${action}`)
       }
 
-      // Record points transaction
-      const { data: transaction, error: txError } = await supabase
+      const pointsToAward = POINT_ACTIONS[action]
+      
+      // Start transaction
+      const { data: transaction, error: transactionError } = await supabase
         .from('points_transactions')
         .insert({
-          user_id: userId,
-          action: action,
-          points: pointsEarned,
-          metadata: metadata
+          user_id: this.userId,
+          action,
+          points: pointsToAward,
+          metadata,
+          created_at: new Date().toISOString()
         })
         .select()
-        .single();
+        .single()
 
-      if (txError) throw txError;
+      if (transactionError) throw transactionError
 
-      // Update user's total points
-      const { data: updatedStats, error: updateError } = await supabase
-        .rpc('add_points', {
-          p_user_id: userId,
-          p_points: pointsEarned
-        });
+      // Update user stats
+      const { data: updatedStats, error: statsError } = await supabase
+        .rpc('update_user_points', {
+          p_user_id: this.userId,
+          p_points_to_add: pointsToAward,
+          p_action: action
+        })
 
-      if (updateError) throw updateError;
+      if (statsError) throw statsError
 
       // Check for new badges
-      const newBadges = await this.checkBadges(userId);
+      const newBadges = await this.checkAndAwardBadges()
 
-      // Check for level up
-      const newLevel = this.calculateTrustLevel(updatedStats.total_points);
-      const oldLevel = this.calculateTrustLevel(updatedStats.total_points - pointsEarned);
+      // Check for trust level upgrade
+      const trustLevelChange = await this.checkTrustLevel(updatedStats.total_points)
+
+      // Create notifications for achievements
+      const notifications = []
       
-      let levelUp = null;
-      if (newLevel > oldLevel) {
-        levelUp = TRUST_LEVELS[newLevel];
-        await this.notifyLevelUp(userId, levelUp);
+      if (newBadges.length > 0) {
+        for (const badge of newBadges) {
+          notifications.push({
+            user_id: this.userId,
+            type: 'badge_earned',
+            title: 'New Badge Earned!',
+            message: `You've earned the ${badge.name} badge!`,
+            metadata: { badge_id: badge.id }
+          })
+        }
       }
 
-      // Notify user of points earned
-      await this.notifyPointsEarned(userId, pointsEarned, action, newBadges, levelUp);
+      if (trustLevelChange) {
+        notifications.push({
+          user_id: this.userId,
+          type: 'trust_level_upgrade',
+          title: 'Trust Level Upgraded!',
+          message: `Congratulations! You've reached ${trustLevelChange.name} status!`,
+          metadata: { new_level: trustLevelChange.level }
+        })
+      }
+
+      // Send notifications
+      if (notifications.length > 0) {
+        await supabase
+          .from('notifications')
+          .insert(notifications)
+      }
 
       return {
         success: true,
-        pointsEarned,
+        pointsEarned: pointsToAward,
         totalPoints: updatedStats.total_points,
         newBadges,
-        levelUp,
+        trustLevelChange,
         transaction
-      };
+      }
 
     } catch (error) {
-      console.error('Error awarding points:', error);
-      return { success: false, error: error.message };
+      console.error('Error awarding points:', error)
+      return {
+        success: false,
+        error: error.message
+      }
     }
   }
 
-  // Check for new badges
-  async checkBadges(userId) {
-    const newBadges = [];
-
+  /**
+   * Check and award badges based on user stats
+   */
+  async checkAndAwardBadges() {
     try {
-      // Get user stats
-      const { data: stats } = await supabase
+      // Get current user stats
+      const { data: stats, error: statsError } = await supabase
         .from('user_stats')
         .select('*')
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', this.userId)
+        .single()
 
-      // Get already earned badges
-      const { data: earned } = await supabase
+      if (statsError) throw statsError
+
+      // Get user's existing badges
+      const { data: existingBadges, error: badgesError } = await supabase
         .from('user_badges')
         .select('badge_id')
-        .eq('user_id', userId);
+        .eq('user_id', this.userId)
 
-      const earnedIds = new Set(earned?.map(b => b.badge_id) || []);
+      if (badgesError) throw badgesError
 
-      // Check each badge
+      const existingBadgeIds = existingBadges.map(b => b.badge_id)
+      const newBadges = []
+
+      // Check each badge condition
       for (const [key, badge] of Object.entries(BADGES)) {
-        if (earnedIds.has(badge.id)) continue; // Already earned
+        if (!existingBadgeIds.includes(badge.id)) {
+          // Evaluate condition
+          const conditionMet = this.evaluateBadgeCondition(badge.condition, stats)
+          
+          if (conditionMet) {
+            // Award badge
+            const { error: awardError } = await supabase
+              .from('user_badges')
+              .insert({
+                user_id: this.userId,
+                badge_id: badge.id,
+                badge_name: badge.name,
+                badge_description: badge.description,
+                badge_icon: badge.icon,
+                earned_at: new Date().toISOString()
+              })
 
-        let qualifies = false;
-
-        // Check qualification criteria
-        if (badge.posts_required && stats.total_posts >= badge.posts_required) {
-          qualifies = true;
-        } else if (badge.helpful_votes_required && stats.helpful_votes >= badge.helpful_votes_required) {
-          qualifies = true;
-        } else if (badge.points_required && stats.total_points >= badge.points_required) {
-          qualifies = true;
-        } else if (badge.days_active && stats.current_streak >= badge.days_active) {
-          qualifies = true;
-        } else if (badge.hazards_reported && stats.hazards_reported >= badge.hazards_reported) {
-          qualifies = true;
-        } else if (badge.spots_saved && stats.spots_saved >= badge.spots_saved) {
-          qualifies = true;
-        } else if (badge.questions_answered && stats.questions_answered >= badge.questions_answered) {
-          qualifies = true;
-        }
-
-        if (qualifies) {
-          // Award badge
-          await supabase.from('user_badges').insert({
-            user_id: userId,
-            badge_id: badge.id,
-            earned_at: new Date().toISOString()
-          });
-
-          newBadges.push(badge);
+            if (!awardError) {
+              newBadges.push(badge)
+              
+              // Award bonus points for badge
+              await this.awardBonusPoints(badge.points, `Badge earned: ${badge.name}`)
+            }
+          }
         }
       }
 
-      return newBadges;
+      return newBadges
 
     } catch (error) {
-      console.error('Error checking badges:', error);
-      return [];
+      console.error('Error checking badges:', error)
+      return []
     }
   }
 
-  // Calculate trust level based on points
-  calculateTrustLevel(points) {
-    for (let level = 5; level >= 1; level--) {
-      if (points >= TRUST_LEVELS[level].points) {
-        return level;
-      }
-    }
-    return 1;
-  }
-
-  // Notify user of points earned
-  async notifyPointsEarned(userId, points, action, newBadges, levelUp) {
-    // Create in-app notification
-    await supabase.from('notifications').insert({
-      user_id: userId,
-      type: 'points_earned',
-      title: `+${points} points earned!`,
-      message: this.getPointsMessage(action),
-      data: {
-        points,
-        action,
-        newBadges: newBadges.map(b => b.id),
-        levelUp: levelUp?.name
-      }
-    });
-
-    // If badges earned or level up, send special notification
-    if (newBadges.length > 0 || levelUp) {
-      let message = '';
-      if (newBadges.length > 0) {
-        message += `🎉 New badge${newBadges.length > 1 ? 's' : ''} earned: ${newBadges.map(b => b.icon + ' ' + b.name).join(', ')}! `;
-      }
-      if (levelUp) {
-        message += `🎊 Level up! You're now a ${levelUp.name}!`;
-      }
-
-      await supabase.from('notifications').insert({
-        user_id: userId,
-        type: 'achievement',
-        title: '🏆 Achievement Unlocked!',
-        message,
-        priority: 'high'
-      });
-    }
-  }
-
-  // Notify level up
-  async notifyLevelUp(userId, level) {
-    await supabase.from('notifications').insert({
-      user_id: userId,
-      type: 'level_up',
-      title: '🎊 Level Up!',
-      message: `Congratulations! You've reached ${level.name} status!`,
-      data: {
-        level: level.name,
-        privileges: level.privileges
-      },
-      priority: 'high'
-    });
-  }
-
-  // Get friendly message for points action
-  getPointsMessage(action) {
-    const messages = {
-      CREATE_FISHING_REPORT: 'Great report! Thanks for sharing with the community.',
-      CREATE_FISHING_REPORT_WITH_PHOTO: 'Awesome catch and photo!',
-      CREATE_FISHING_REPORT_WITH_VIDEO: 'Amazing video report!',
-      COMMENT_ON_POST: 'Thanks for engaging with the community!',
-      ANSWER_QUESTION: 'Thanks for helping a fellow captain!',
-      BEST_ANSWER_SELECTED: 'Your answer was chosen as the best!',
-      DAILY_CHECK_IN: 'Daily check-in bonus!',
-      COMPLETE_TRAINING_COURSE: 'Congratulations on completing your training!',
-      EARN_CERTIFICATION: 'New certification earned!'
-    };
-    return messages[action] || 'Points earned!';
-  }
-
-  // Get leaderboard
-  async getLeaderboard(period = 'all_time', limit = 100) {
-    let query = supabase
-      .from('user_stats')
-      .select(`
-        *,
-        user:users!inner(
-          id,
-          full_name,
-          avatar_url,
-          captain:captains(captain_id, business_name)
-        )
-      `)
-      .order('total_points', { ascending: false })
-      .limit(limit);
-
-    // Filter by period
-    if (period === 'weekly') {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      query = query.gte('last_activity', weekAgo.toISOString());
-    } else if (period === 'monthly') {
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      query = query.gte('last_activity', monthAgo.toISOString());
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching leaderboard:', error);
-      return [];
-    }
-
-    return data.map((row, index) => ({
-      rank: index + 1,
-      userId: row.user_id,
-      name: row.user.full_name,
-      avatar: row.user.avatar_url,
-      isCaptain: !!row.user.captain,
-      businessName: row.user.captain?.business_name,
-      points: row.total_points,
-      badges: row.badges_count || 0,
-      level: this.calculateTrustLevel(row.total_points),
-      levelName: TRUST_LEVELS[this.calculateTrustLevel(row.total_points)].name
-    }));
-  }
-
-  // Get user's community profile
-  async getCommunityProfile(userId) {
+  /**
+   * Evaluate badge condition
+   */
+  evaluateBadgeCondition(condition, stats) {
     try {
-      // Get user stats
-      const { data: stats } = await supabase
-        .from('user_stats')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      // Simple evaluation - in production, use a safe evaluator
+      // This is a simplified example
+      const parts = condition.split(' ')
+      const field = parts[0]
+      const operator = parts[1]
+      const value = parseInt(parts[2])
 
-      // Get badges
-      const { data: badges } = await supabase
-        .from('user_badges')
-        .select('badge_id, earned_at')
-        .eq('user_id', userId)
-        .order('earned_at', { ascending: false });
+      const statValue = stats[field] || 0
 
-      // Get recent activity
-      const { data: recentActivity } = await supabase
+      switch (operator) {
+        case '>=':
+          return statValue >= value
+        case '>':
+          return statValue > value
+        case '===':
+          return statValue === value
+        case '==':
+          return statValue == value
+        default:
+          return false
+      }
+    } catch (error) {
+      console.error('Error evaluating condition:', error)
+      return false
+    }
+  }
+
+  /**
+   * Check and update trust level
+   */
+  async checkTrustLevel(totalPoints) {
+    try {
+      const currentLevel = this.getTrustLevelByPoints(totalPoints)
+      
+      // Get user's current trust level
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('trust_level')
+        .eq('id', this.userId)
+        .single()
+
+      if (userError) throw userError
+
+      // Check if trust level should be upgraded
+      if (currentLevel.level > (userData.trust_level || 0)) {
+        // Update user's trust level
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            trust_level: currentLevel.level,
+            trust_level_name: currentLevel.name,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', this.userId)
+
+        if (updateError) throw updateError
+
+        return currentLevel
+      }
+
+      return null
+
+    } catch (error) {
+      console.error('Error checking trust level:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get trust level by points
+   */
+  getTrustLevelByPoints(points) {
+    let currentLevel = TRUST_LEVELS.NEW_MEMBER
+
+    for (const [key, level] of Object.entries(TRUST_LEVELS)) {
+      if (points >= level.minPoints) {
+        currentLevel = level
+      }
+    }
+
+    return currentLevel
+  }
+
+  /**
+   * Award bonus points (for badges, etc)
+   */
+  async awardBonusPoints(points, reason) {
+    try {
+      await supabase
         .from('points_transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .insert({
+          user_id: this.userId,
+          action: 'BONUS',
+          points,
+          metadata: { reason },
+          created_at: new Date().toISOString()
+        })
 
-      // Get user rank
-      const { data: rankData } = await supabase
-        .rpc('get_user_rank', { p_user_id: userId });
+      await supabase
+        .rpc('update_user_points', {
+          p_user_id: this.userId,
+          p_points_to_add: points,
+          p_action: 'BONUS'
+        })
 
-      const level = this.calculateTrustLevel(stats?.total_points || 0);
-      const currentLevel = TRUST_LEVELS[level];
-      const nextLevel = TRUST_LEVELS[level + 1];
-
-      return {
-        stats: stats || {
-          total_points: 0,
-          total_posts: 0,
-          helpful_votes: 0,
-          current_streak: 0
-        },
-        badges: badges?.map(b => ({
-          ...BADGES[Object.keys(BADGES).find(k => BADGES[k].id === b.badge_id)],
-          earnedAt: b.earned_at
-        })) || [],
-        recentActivity: recentActivity || [],
-        rank: rankData?.[0]?.rank || 0,
-        level: level,
-        levelName: currentLevel.name,
-        privileges: currentLevel.privileges,
-        nextLevel: nextLevel ? {
-          name: nextLevel.name,
-          pointsRequired: nextLevel.points,
-          pointsToGo: nextLevel.points - (stats?.total_points || 0)
-        } : null
-      };
     } catch (error) {
-      console.error('Error getting community profile:', error);
-      return null;
+      console.error('Error awarding bonus points:', error)
     }
   }
 
-  // Record user activity (for streak tracking)
-  async recordDailyActivity(userId) {
+  /**
+   * Handle daily check-in
+   */
+  async handleDailyCheckIn() {
     try {
-      const today = new Date().toISOString().split('T')[0];
-
       // Check if already checked in today
-      const { data: existing } = await supabase
+      const today = new Date().toISOString().split('T')[0]
+      
+      const { data: existingCheckIn, error: checkError } = await supabase
         .from('daily_check_ins')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', this.userId)
         .eq('check_in_date', today)
-        .single();
+        .single()
 
-      if (existing) {
-        return { alreadyCheckedIn: true };
-      }
-
-      // Record check-in
-      await supabase.from('daily_check_ins').insert({
-        user_id: userId,
-        check_in_date: today
-      });
-
-      // Update streak
-      const { data: stats } = await supabase
-        .from('user_stats')
-        .select('current_streak, longest_streak, last_activity')
-        .eq('user_id', userId)
-        .single();
-
-      let newStreak = 1;
-      if (stats?.last_activity) {
-        const lastActivity = new Date(stats.last_activity);
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        if (lastActivity.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
-          newStreak = (stats.current_streak || 0) + 1;
+      if (existingCheckIn) {
+        return {
+          success: false,
+          message: 'Already checked in today'
         }
       }
 
-      const newLongest = Math.max(newStreak, stats?.longest_streak || 0);
+      // Get yesterday's check-in for streak
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split('T')[0]
 
+      const { data: yesterdayCheckIn } = await supabase
+        .from('daily_check_ins')
+        .select('streak_count')
+        .eq('user_id', this.userId)
+        .eq('check_in_date', yesterdayStr)
+        .single()
+
+      const currentStreak = yesterdayCheckIn ? yesterdayCheckIn.streak_count + 1 : 1
+
+      // Record check-in
+      const { error: insertError } = await supabase
+        .from('daily_check_ins')
+        .insert({
+          user_id: this.userId,
+          check_in_date: today,
+          streak_count: currentStreak,
+          created_at: new Date().toISOString()
+        })
+
+      if (insertError) throw insertError
+
+      // Award points for check-in
+      const checkInResult = await this.awardPoints('DAILY_CHECK_IN')
+
+      // Check for streak bonuses
+      const streakBonuses = []
+      if (currentStreak === 7) {
+        await this.awardPoints('STREAK_7_DAYS')
+        streakBonuses.push('7-day streak bonus!')
+      } else if (currentStreak === 30) {
+        await this.awardPoints('STREAK_30_DAYS')
+        streakBonuses.push('30-day streak bonus!')
+      } else if (currentStreak === 100) {
+        await this.awardPoints('STREAK_100_DAYS')
+        streakBonuses.push('100-day streak bonus!')
+      }
+
+      // Update user stats
       await supabase
         .from('user_stats')
         .update({
-          current_streak: newStreak,
-          longest_streak: newLongest,
-          last_activity: new Date().toISOString()
+          current_streak: currentStreak,
+          longest_streak: supabase.sql`GREATEST(longest_streak, ${currentStreak})`,
+          last_check_in: today
         })
-        .eq('user_id', userId);
-
-      // Award points for daily check-in
-      await this.awardPoints(userId, 'DAILY_CHECK_IN');
-
-      // Check for streak bonuses
-      if (newStreak === 3) {
-        await this.awardPoints(userId, 'WEEKLY_STREAK_3');
-      } else if (newStreak === 5) {
-        await this.awardPoints(userId, 'WEEKLY_STREAK_5');
-      } else if (newStreak === 10) {
-        await this.awardPoints(userId, 'WEEKLY_STREAK_10');
-      } else if (newStreak === 30) {
-        await this.awardPoints(userId, 'MONTHLY_ACTIVE_30_DAYS');
-      }
+        .eq('user_id', this.userId)
 
       return {
         success: true,
-        streak: newStreak,
-        isNewRecord: newStreak === newLongest && newStreak > 1
-      };
+        currentStreak,
+        pointsEarned: checkInResult.pointsEarned,
+        streakBonuses,
+        totalPoints: checkInResult.totalPoints
+      }
 
     } catch (error) {
-      console.error('Error recording daily activity:', error);
-      return { success: false, error: error.message };
+      console.error('Error handling check-in:', error)
+      return {
+        success: false,
+        error: error.message
+      }
     }
   }
 
-  // Handle fishing report creation
-  async handleFishingReportCreated(userId, reportId, hasPhoto, hasVideo) {
-    let action = 'CREATE_FISHING_REPORT';
-    if (hasVideo) {
-      action = 'CREATE_FISHING_REPORT_WITH_VIDEO';
-    } else if (hasPhoto) {
-      action = 'CREATE_FISHING_REPORT_WITH_PHOTO';
+  /**
+   * Get leaderboard
+   */
+  static async getLeaderboard(period = 'week', limit = 10) {
+    try {
+      let dateFilter = new Date()
+      
+      switch (period) {
+        case 'day':
+          dateFilter.setDate(dateFilter.getDate() - 1)
+          break
+        case 'week':
+          dateFilter.setDate(dateFilter.getDate() - 7)
+          break
+        case 'month':
+          dateFilter.setMonth(dateFilter.getMonth() - 1)
+          break
+        case 'all':
+          dateFilter = new Date('2020-01-01')
+          break
+      }
+
+      const { data: leaderboard, error } = await supabase
+        .from('points_transactions')
+        .select(`
+          user_id,
+          users (
+            username,
+            avatar_url,
+            trust_level_name,
+            is_captain
+          )
+        `)
+        .gte('created_at', dateFilter.toISOString())
+        .order('points', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+
+      // Aggregate points by user
+      const userPoints = {}
+      
+      for (const transaction of leaderboard) {
+        if (!userPoints[transaction.user_id]) {
+          userPoints[transaction.user_id] = {
+            user_id: transaction.user_id,
+            ...transaction.users,
+            points: 0
+          }
+        }
+        userPoints[transaction.user_id].points += transaction.points
+      }
+
+      // Sort and return top users
+      const sortedLeaderboard = Object.values(userPoints)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, limit)
+        .map((user, index) => ({
+          ...user,
+          rank: index + 1
+        }))
+
+      return sortedLeaderboard
+
+    } catch (error) {
+      console.error('Error getting leaderboard:', error)
+      return []
     }
-
-    // Award points
-    await this.awardPoints(userId, action, { reportId });
-
-    // Update post count
-    await supabase.rpc('increment_stat', {
-      p_user_id: userId,
-      p_stat_name: 'total_posts'
-    });
-
-    // Record daily activity
-    await this.recordDailyActivity(userId);
-  }
-
-  // Handle comment creation
-  async handleCommentCreated(userId, commentId, postId) {
-    await this.awardPoints(userId, 'COMMENT_ON_POST', { commentId, postId });
-    await this.recordDailyActivity(userId);
-  }
-
-  // Handle helpful vote
-  async handleHelpfulVote(voterId, recipientId, postId) {
-    // Award points to recipient
-    await this.awardPoints(recipientId, 'UPVOTE_RECEIVED', { voterId, postId });
-
-    // Update helpful votes count
-    await supabase.rpc('increment_stat', {
-      p_user_id: recipientId,
-      p_stat_name: 'helpful_votes'
-    });
-  }
-
-  // Handle answer selection
-  async handleAnswerSelected(answerId, authorId, questionId) {
-    await this.awardPoints(authorId, 'BEST_ANSWER_SELECTED', { answerId, questionId });
-    
-    await supabase.rpc('increment_stat', {
-      p_user_id: authorId,
-      p_stat_name: 'questions_answered'
-    });
   }
 }
 
-// API Handler
-export async function handler(req) {
-  const communityService = new CommunityService();
-  
-  try {
-    const { action, ...params } = await req.json();
+/**
+ * Community moderation functions
+ */
+export class CommunityModeration {
+  /**
+   * Check if post requires approval
+   */
+  static async requiresApproval(userId) {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('trust_level')
+        .eq('id', userId)
+        .single()
 
-    switch (action) {
-      case 'awardPoints':
-        return await communityService.awardPoints(params.userId, params.pointsAction, params.metadata);
-      
-      case 'getLeaderboard':
-        const leaderboard = await communityService.getLeaderboard(params.period, params.limit);
-        return new Response(JSON.stringify({ leaderboard }), { status: 200 });
-      
-      case 'getCommunityProfile':
-        const profile = await communityService.getCommunityProfile(params.userId);
-        return new Response(JSON.stringify({ profile }), { status: 200 });
-      
-      case 'recordDailyActivity':
-        const activity = await communityService.recordDailyActivity(params.userId);
-        return new Response(JSON.stringify(activity), { status: 200 });
-      
-      case 'handleFishingReportCreated':
-        await communityService.handleFishingReportCreated(
-          params.userId,
-          params.reportId,
-          params.hasPhoto,
-          params.hasVideo
-        );
-        return new Response(JSON.stringify({ success: true }), { status: 200 });
-      
-      case 'handleCommentCreated':
-        await communityService.handleCommentCreated(params.userId, params.commentId, params.postId);
-        return new Response(JSON.stringify({ success: true }), { status: 200 });
-      
-      case 'handleHelpfulVote':
-        await communityService.handleHelpfulVote(params.voterId, params.recipientId, params.postId);
-        return new Response(JSON.stringify({ success: true }), { status: 200 });
-      
-      default:
-        return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400 });
+      if (error) throw error
+
+      const trustLevel = Object.values(TRUST_LEVELS).find(
+        level => level.level === (user.trust_level || 0)
+      )
+
+      return trustLevel.postApprovalRequired
+
+    } catch (error) {
+      console.error('Error checking approval requirement:', error)
+      return true // Default to requiring approval
     }
-  } catch (error) {
-    console.error('Community API error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+
+  /**
+   * Check daily post limit
+   */
+  static async checkDailyPostLimit(userId) {
+    try {
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('trust_level')
+        .eq('id', userId)
+        .single()
+
+      if (userError) throw userError
+
+      const trustLevel = Object.values(TRUST_LEVELS).find(
+        level => level.level === (user.trust_level || 0)
+      )
+
+      if (trustLevel.dailyPostLimit === -1) {
+        return { allowed: true, remaining: -1 }
+      }
+
+      // Count today's posts
+      const today = new Date().toISOString().split('T')[0]
+      
+      const { count, error: countError } = await supabase
+        .from('fishing_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', `${today}T00:00:00`)
+
+      if (countError) throw countError
+
+      return {
+        allowed: count < trustLevel.dailyPostLimit,
+        remaining: trustLevel.dailyPostLimit - count
+      }
+
+    } catch (error) {
+      console.error('Error checking post limit:', error)
+      return { allowed: false, remaining: 0 }
+    }
+  }
+
+  /**
+   * Check if user can moderate
+   */
+  static async canModerate(userId) {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('trust_level')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+
+      const trustLevel = Object.values(TRUST_LEVELS).find(
+        level => level.level === (user.trust_level || 0)
+      )
+
+      return trustLevel.permissions.includes('moderate')
+
+    } catch (error) {
+      console.error('Error checking moderation permission:', error)
+      return false
+    }
   }
 }
 
-export default CommunityService;
-export { POINTS_CONFIG, BADGES, TRUST_LEVELS };
+/**
+ * API endpoints for the points system
+ */
+export async function handleCommunityAPI(req, res) {
+  const { action, userId, ...params } = req.body
+
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID required' })
+  }
+
+  const pointsManager = new PointsManager(userId)
+
+  switch (action) {
+    case 'awardPoints':
+      const pointsResult = await pointsManager.awardPoints(
+        params.pointsAction,
+        params.metadata
+      )
+      return res.json(pointsResult)
+
+    case 'dailyCheckIn':
+      const checkInResult = await pointsManager.handleDailyCheckIn()
+      return res.json(checkInResult)
+
+    case 'getLeaderboard':
+      const leaderboard = await PointsManager.getLeaderboard(
+        params.period || 'week',
+        params.limit || 10
+      )
+      return res.json(leaderboard)
+
+    case 'getUserStats':
+      const { data: stats, error } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      
+      return res.json(stats || {})
+
+    case 'getUserBadges':
+      const { data: badges, error: badgesError } = await supabase
+        .from('user_badges')
+        .select('*')
+        .eq('user_id', userId)
+        .order('earned_at', { ascending: false })
+      
+      return res.json(badges || [])
+
+    default:
+      return res.status(400).json({ error: 'Invalid action' })
+  }
+}
+
+/**
+ * React hooks for community features
+ */
+export function usePoints(userId) {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) return
+
+    const fetchStats = async () => {
+      const { data, error } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      setStats(data)
+      setLoading(false)
+    }
+
+    fetchStats()
+
+    // Subscribe to changes
+    const subscription = supabase
+      .channel(`user_stats:${userId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_stats',
+        filter: `user_id=eq.${userId}`
+      }, (payload) => {
+        setStats(payload.new)
+      })
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [userId])
+
+  return { stats, loading }
+}
+
+export function useLeaderboard(period = 'week') {
+  const [leaderboard, setLeaderboard] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const data = await PointsManager.getLeaderboard(period)
+      setLeaderboard(data)
+      setLoading(false)
+    }
+
+    fetchLeaderboard()
+
+    // Refresh every minute
+    const interval = setInterval(fetchLeaderboard, 60000)
+
+    return () => clearInterval(interval)
+  }, [period])
+
+  return { leaderboard, loading }
+}
+
+// Export everything
+export default {
+  PointsManager,
+  CommunityModeration,
+  handleCommunityAPI,
+  usePoints,
+  useLeaderboard,
+  POINT_ACTIONS,
+  TRUST_LEVELS,
+  BADGES
+}
