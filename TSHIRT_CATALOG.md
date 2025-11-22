@@ -1,537 +1,420 @@
-# Gulf Coast Charters - Merchandise Catalog
-## T-Shirt Designs & Branding Strategy
+# Gulf Coast Charters - T-Shirt Design Catalog
+## Professional Merchandise Designs Ready for Production
 
 ---
 
-## 👕 T-Shirt Design Collection
+## 🎨 Design Overview
 
-### Design 1: Wave Logo (Classic)
-**File:** `design-1-wave-logo.svg`
-
-**Style:** Bold, modern, action-oriented  
-**Colors:** Navy blue background with white & light blue accents  
-**Best For:** Fishing charters, general merchandise  
-
-**Design Elements:**
-- Large stylized waves
-- Center console boat silhouette
-- "GULF COAST CHARTERS" in impact font
-- Tagline: "Life's Better on the Water"
-- Location: Gulf Shores • Orange Beach • Pensacola
-- Decorative fish silhouettes
-
-**Recommended Shirt Colors:**
-- Navy Blue (primary)
-- Charcoal Gray
-- Ocean Blue
-
-**Print Location:** Front chest (large, 12"x14")
-
-**Target Audience:** Charter fishing customers, general brand awareness
+We've created **5 unique t-shirt designs** that capture different aspects of the Gulf Coast Charters brand. Each design is production-ready and suitable for various printing methods.
 
 ---
 
-### Design 2: Vintage Nautical Badge
-**File:** `design-2-vintage-badge.svg`
+## 👕 Design #1: Classic Anchor Badge
 
-**Style:** Classic, vintage, premium  
-**Colors:** Gold/tan badge on navy background  
-**Best For:** Premium merchandise, captain/crew gear  
+**File:** `design-1-classic-anchor.svg`
 
-**Design Elements:**
-- Circular badge with rope detail
-- Large anchor centerpiece
-- "EST. 2024" on curved text
-- "GULF COAST" main text
-- "CHARTERS" on bottom curve
-- Tagline: "Premium Fishing Adventures"
+**Style:** Traditional nautical, professional  
+**Best For:** Official merchandise, captain uniforms, corporate gifts  
+**Color Options:** Navy on white, White on navy, Navy on light blue
 
-**Recommended Shirt Colors:**
-- Navy Blue (primary)
-- Forest Green
-- Black
+**Features:**
+- Circular anchor badge design
+- "Gulf Coast Charters" curved text
+- Vintage rope details
+- Coordinates at bottom (30.2672° N, 87.6431° W)
+- "Est. 2024" badge
+- Icons: Fish, Boat, Sun
 
-**Print Location:** Front chest (large, 12"x12" circular)
-
-**Target Audience:** Premium customers, gift shop, collectors
+**Recommended Printing:** Screen printing, Direct-to-garment (DTG)  
+**Target Audience:** Captains, staff, serious anglers
 
 ---
 
-### Design 3: Sunset Paradise
-**File:** `design-3-sunset-paradise.svg`
+## 🌅 Design #2: Vintage Sunset
 
-**Style:** Tropical, vacation vibes, relaxed  
-**Colors:** Sunset gradient (yellow/orange/red) with palm trees  
-**Best For:** Vacation packages, beach/resort wear  
+**File:** `design-2-vintage-sunset.svg`
 
-**Design Elements:**
-- Large sunset with rays
-- Ocean waves
+**Style:** Retro 70s/80s beach vibes  
+**Best For:** Tourist appeal, gift shop bestseller  
+**Color Options:** Full color on white, Full color on cream, Black on sunset gradient
+
+**Features:**
+- Horizontal sunset stripes (yellow, orange, red, brown, blue)
+- Silhouette sailboat
 - Palm tree silhouettes
-- "Gulf Coast" in script font
-- "CHARTERS" in bold
-- Tagline: "Where Paradise Meets Adventure"
+- "100% Authentic" vintage badge
+- "Since 2024" retro typography
 
-**Recommended Shirt Colors:**
-- Dark Navy/Black (to make sunset pop)
-- Charcoal Gray
-
-**Print Location:** Front chest (large, 13"x15")
-
-**Target Audience:** Vacation customers, WhereToVacation.com crossover
+**Recommended Printing:** Full-color DTG, Sublimation  
+**Target Audience:** Tourists, vacation souvenir buyers, beach lovers
 
 ---
 
-### Design 4: Jet Ski Action
-**File:** `design-4-jetski-action.svg`
+## ⚓ Design #3: Modern Minimalist
 
-**Style:** High energy, action sports, modern  
-**Colors:** Black background with bright blue/orange accents  
-**Best For:** Watercraft rentals, inland waterway activities  
+**File:** `design-3-modern-minimalist.svg`
 
-**Design Elements:**
-- Jet ski silhouette in action
-- Water splash effects
-- Speed lines
-- "WATERCRAFT RENTALS" subtitle
-- "Jet Skis • Pontoons • Ski Boats"
-- Website: GulfCoastCharters.com
+**Style:** Clean, contemporary, upscale  
+**Best For:** Premium line, younger demographic  
+**Color Options:** Blue on white, White on charcoal, Teal on heather gray
 
-**Recommended Shirt Colors:**
-- Black (primary)
-- Navy Blue
-- Bright Red
+**Features:**
+- Simple line-art boat illustration
+- Clean Helvetica typography
+- Coordinate design element
+- Minimal icon set (compass, anchor, waves)
+- Lots of negative space
 
-**Print Location:** Front chest (large, 12"x14")
-
-**Target Audience:** PWC/jet ski renters, younger demographic, action sports fans
+**Recommended Printing:** Screen printing (2-3 colors), Vinyl  
+**Target Audience:** Millennials, design-conscious customers, premium buyers
 
 ---
 
-### Design 5: Minimalist Logo
-**File:** `design-5-minimalist.svg`
+## 🎣 Design #4: Fishing Focus
 
-**Style:** Clean, simple, modern  
-**Colors:** Navy blue on white/light gray  
-**Best For:** Everyday wear, subtle branding, polo shirts  
+**File:** `design-4-fishing-focus.svg`
 
-**Design Elements:**
-- Simple circle with waves
-- "GCC" monogram
-- "GULF COAST CHARTERS" below
-- "EST. 2024"
-- Small anchor icon
+**Style:** Bold, sport-focused, authentic  
+**Best For:** Tournament gear, serious fishermen  
+**Color Options:** Red on white, White on black, Multi-color on navy
 
-**Recommended Shirt Colors:**
-- White (primary)
-- Light Gray
-- Heather Blue
-- Light Sand
+**Features:**
+- Large red snapper illustration
+- "Reel Deal" headline
+- Fishing hook detail
+- Species list footer
+- "Catch of a Lifetime" banner
 
-**Print Location:** Left chest (small, 4"x5") OR Front center (medium, 8"x10")
-
-**Target Audience:** Staff uniforms, subtle merchandise, professional wear
+**Recommended Printing:** DTG for full detail, Multi-color screen printing  
+**Target Audience:** Serious anglers, tournament participants, fishing enthusiasts
 
 ---
 
-## 🎨 Print Specifications
+## 🏖️ Design #5: Beach Vibe
 
-### Screen Printing (Recommended for bulk)
-- **Method:** Plastisol ink
-- **Minimum Order:** 24 shirts per design
-- **Cost:** $8-12 per shirt (depending on colors)
-- **Best For:** Designs 1-4 (multiple colors)
+**File:** `design-5-beach-vibe.svg`
 
-### Direct-to-Garment (DTG)
-- **Method:** Inkjet printing
-- **Minimum Order:** 1 shirt
-- **Cost:** $15-20 per shirt
-- **Best For:** Design 5, small batches, photo-realistic
+**Style:** Fun, playful, family-friendly  
+**Best For:** Kids' line, family packages  
+**Color Options:** Full color on white, Primary colors on light blue
 
-### Heat Transfer Vinyl (HTV)
-- **Method:** Cut vinyl
-- **Minimum Order:** 1 shirt
-- **Cost:** $12-18 per shirt
-- **Best For:** Single color designs, names/numbers
+**Features:**
+- Smiling sun with sunglasses
+- Beach ball and sailboat
+- "Life's Better on the Water" slogan
+- Wave pattern
+- Fun emoji icons
+
+**Recommended Printing:** Full-color DTG, Sublimation  
+**Target Audience:** Families, kids, casual beach-goers, gift buyers
 
 ---
 
-## 👕 Shirt Types & Pricing
+## 📏 Production Specifications
 
-### Standard T-Shirts
-**Gildan 5000 / Bella+Canvas 3001**
-- Material: 100% cotton
-- Sizes: S-3XL
-- Wholesale: $3-4
-- Retail: $24.99
+### File Formats Provided
+- **SVG:** Vector format (scalable to any size)
+- **Recommended Export:** PNG at 300 DPI, 12" x 14" print area
 
-### Performance T-Shirts
-**Hanes Cool DRI / Nike Dri-FIT**
-- Material: Polyester moisture-wicking
-- Sizes: S-3XL
-- Wholesale: $6-8
-- Retail: $29.99
-- **Perfect for:** Fishing, water sports (quick-dry)
+### Print Area Recommendations
+- **Front Chest:** 10" x 12" (all designs)
+- **Full Front:** 12" x 14" (designs #2, #4, #5)
+- **Back:** 12" x 14" (optional for #1, #3)
+- **Pocket:** 3" x 3" (mini version of #1 or #3)
 
-### Long Sleeve
-**Comfort Colors / Bella+Canvas**
-- Material: 100% cotton
-- Sizes: S-3XL
-- Wholesale: $8-10
-- Retail: $34.99
+### Garment Recommendations
 
-### Tank Tops
-**Comfort Colors Tank**
-- Material: 100% cotton
-- Sizes: S-2XL
-- Wholesale: $5-6
-- Retail: $22.99
-
-### Polo Shirts (Staff/Premium)
-**Gildan DryBlend Polo**
-- Material: Cotton/poly blend
-- Sizes: S-3XL
-- Wholesale: $8-10
-- Retail: $39.99
-- **Use Design 5** (embroidered logo)
+| Design | Best Garment Types | Colors |
+|--------|-------------------|--------|
+| #1 Classic | Polo, Performance tee, Premium cotton | Navy, White, Light Blue |
+| #2 Sunset | Standard cotton, Comfort blend | White, Cream, Sand |
+| #3 Minimalist | Premium tri-blend, Fashion fit | Charcoal, Heather Gray, White |
+| #4 Fishing | Performance moisture-wicking, Cotton | White, Navy, Black |
+| #5 Beach | Standard cotton, Youth sizes | White, Light Blue, Aqua |
 
 ---
 
 ## 💰 Pricing Strategy
 
-### Retail Prices
-| Product | Wholesale | Markup | Retail | Profit |
-|---------|-----------|--------|--------|--------|
-| Standard T-Shirt | $12 | 108% | $24.99 | $12.99 |
-| Performance Tee | $16 | 87% | $29.99 | $13.99 |
-| Long Sleeve | $20 | 75% | $34.99 | $14.99 |
-| Tank Top | $15 | 53% | $22.99 | $7.99 |
-| Polo Shirt | $22 | 82% | $39.99 | $17.99 |
-
-### Volume Discounts
-- **Buy 2, Get 10% Off** - Customer saves $5
-- **Buy 3+, Get 15% Off** - Customer saves $11.25
-- **Family Pack (4 shirts)** - $89.99 (save $10)
-
----
-
-## 🛍️ Sales Channels
-
-### 1. On-Site Sales (Marina/Office)
-**Display:**
-- Wall-mounted shirt display (25-30 shirts)
-- Size chart visible
-- All 5 designs showcased
-- Point-of-sale iPad checkout
-
-**Strategy:**
-- Offer with booking ("Get 15% off shirt with charter!")
-- Post-trip sales ("Commemorate your catch!")
-- Impulse buy placement near check-out
-
-**Expected Revenue:**
-- 30% of customers buy shirt = $750/day (100 customers)
-- Monthly: $22,500
-
-### 2. Online Store (Website)
-**E-Commerce Platform:** Shopify / WooCommerce
-
-**Features:**
-- All designs + colors available
-- Size guide with measurements
-- Free shipping over $75
-- Virtual try-on (AR feature)
-- Customer reviews with photos
-
-**Marketing:**
-- Email campaigns to past customers
-- Social media promotions
-- Retargeting ads
-
-**Expected Revenue:**
-- 500 orders/month × $28 avg = $14,000/month
-
-### 3. Print-on-Demand (Passive Income)
-**Platforms:**
-- Printful
-- Printify
-- Redbubble
-- Teespring
-
-**Strategy:**
-- Upload designs
-- Zero inventory
-- Automatic fulfillment
-- Lower margins but no risk
-
-**Expected Revenue:**
-- $500-1,000/month passive
-
-### 4. Wholesale to Local Shops
-**Target:**
-- Beach gift shops
-- Marina stores
-- Hotel gift shops
-- Tourist traps
-
-**Pricing:**
-- Wholesale: $15/shirt
-- Shops retail at: $29.99
-- Minimum order: 50 shirts
-
-**Expected Revenue:**
-- 5 shops × 50 shirts/month = $3,750/month
-
----
-
-## 📦 Production & Inventory
-
-### Initial Order (Recommended)
+### Wholesale Costs (Estimated)
 ```
-Design 1 (Wave Logo):
-- Navy: 50 (S:5, M:15, L:20, XL:8, 2XL:2)
-- Charcoal: 30 (S:3, M:10, L:12, XL:4, 2XL:1)
+Standard T-Shirt (Gildan 5000):
+- Blank: $3.00
+- 1-color screen print: $2.50
+- 2-color screen print: $3.50
+- Full-color DTG: $5.00
+- Total cost: $6.50 - $8.00
 
-Design 2 (Vintage Badge):
-- Navy: 40 (S:4, M:12, L:16, XL:6, 2XL:2)
+Premium T-Shirt (Next Level 6210):
+- Blank: $5.50
+- 1-color screen print: $2.50
+- 2-color screen print: $3.50
+- Full-color DTG: $5.00
+- Total cost: $8.00 - $10.50
 
-Design 3 (Sunset):
-- Black: 40 (S:4, M:12, L:16, XL:6, 2XL:2)
-
-Design 4 (Jet Ski):
-- Black: 30 (S:3, M:10, L:12, XL:4, 2XL:1)
-
-Design 5 (Minimalist):
-- White: 40 (S:4, M:12, L:16, XL:6, 2XL:2)
-- Gray: 30 (S:3, M:10, L:12, XL:4, 2XL:1)
-
-TOTAL: 260 shirts
-Investment: $3,120 (at $12/shirt wholesale)
-Retail Value: $6,497 (at $24.99 avg)
-Gross Profit Potential: $3,377 (108% ROI)
+Performance Tee (Gildan 42000):
+- Blank: $6.00
+- 1-color screen print: $2.50
+- Total cost: $8.50
 ```
 
-### Reorder Strategy
-- Reorder when inventory drops below 25% (65 shirts)
-- Focus on best sellers (track sales data)
-- Seasonal adjustments (more performance tees in summer)
+### Suggested Retail Prices
+```
+Standard T-Shirts:
+- Design #1, #3: $24.99 (simple prints)
+- Design #2, #4, #5: $29.99 (full color)
+
+Premium T-Shirts:
+- All designs: $34.99 - $39.99
+
+Performance Tees:
+- All designs: $39.99 - $44.99
+
+Youth Sizes:
+- All designs: $19.99 - $24.99
+```
+
+### Profit Margins
+```
+Standard tee at $24.99:
+- Cost: $6.50 - $8.00
+- Profit: $16.99 - $18.49
+- Margin: 68-74%
+
+Premium tee at $34.99:
+- Cost: $8.00 - $10.50
+- Profit: $24.49 - $26.99
+- Margin: 70-77%
+```
 
 ---
 
-## 🎁 Additional Merchandise (Future)
+## 🏭 Recommended Printing Partners
 
-### Apparel
-- **Hoodies** - $44.99 (winter/evening wear)
-- **Trucker Hats** - $19.99 (very popular with fishing crowd)
-- **Visors** - $14.99 (sun protection)
-- **Rash Guards** - $39.99 (UV protection for water sports)
-- **Board Shorts** - $34.99 (jet ski/beach)
+### Screen Printing (Large Orders)
+**Minimum Order:** 50-100 pieces  
+**Best For:** Designs #1, #3  
+**Turnaround:** 2-3 weeks  
+**Cost:** Lowest per unit
 
-### Accessories
-- **Koozies** - $4.99 (drink holders, high margin)
-- **Stickers** - $2.99 (logo, free with purchase)
-- **Decals** - $9.99 (boat/car decals)
-- **Keychains** - $7.99 (floating keychain with logo)
-- **Waterproof Phone Cases** - $24.99 (with logo)
+**Recommended Vendors:**
+- CustomInk.com
+- RushOrderTees.com
+- AAA T-Shirts (local)
 
-### Drinkware
-- **Stainless Tumblers** - $24.99 (30oz, logo engraved)
-- **Water Bottles** - $19.99 (insulated)
-- **Pint Glasses** - $12.99 (for bars/restaurants)
+### Direct-to-Garment (Small Orders)
+**Minimum Order:** 1 piece  
+**Best For:** All designs, especially #2, #4, #5  
+**Turnaround:** 5-7 days  
+**Cost:** Higher per unit, no setup fees
 
-### Gear
-- **Cooler Bags** - $29.99 (soft-sided, logo)
-- **Dry Bags** - $34.99 (waterproof, perfect for boats)
-- **Sunglasses** - $24.99 (polarized, branded)
-- **Towels** - $19.99 (beach towel with logo)
+**Recommended Vendors:**
+- Printful.com (dropshipping enabled)
+- Printify.com
+- CustomCat.com
 
----
+### Print-on-Demand (Zero Inventory)
+**Minimum Order:** 0 (print as ordered)  
+**Best For:** Testing designs, online store  
+**Turnaround:** 3-5 days  
+**Cost:** Highest per unit, zero upfront cost
 
-## 📸 Photography & Marketing
-
-### Product Photography
-**Required Shots:**
-1. **Flat lay** - Shirt on white background
-2. **Model wearing** - Action shots on boat/beach
-3. **Detail shots** - Close-up of print quality
-4. **Lifestyle** - People fishing/jet skiing in shirts
-5. **Group shots** - Family/friends wearing together
-
-### Social Media Strategy
-**Instagram:**
-- Product posts 2x/week
-- Customer photos (repost with credit)
-- Behind-the-scenes (printing process)
-- Giveaways (shirt + charter package)
-
-**Facebook:**
-- Weekly merch spotlight
-- Customer testimonials wearing shirts
-- "Tag yourself in our shirt!" campaigns
-
-**TikTok:**
-- Unboxing videos
-- "Outfit of the day" on charter
-- Design process time-lapse
-
-### Hashtags
-- #GulfCoastCharters
-- #GulfShores
-- #OrangeBeach
-- #FishingShirt
-- #BeachLife
-- #CharterFishing
-- #JetSkiLife
-- #GulfCoast
+**Recommended Platforms:**
+- Printful + Shopify integration
+- Printify + WooCommerce
+- Teespring (built-in storefront)
 
 ---
 
-## 🎯 Promotional Campaigns
+## 📦 Order Recommendations
 
-### Launch Campaign
-**"Grand Opening Merch Sale"**
-- First 100 customers: 30% off
-- Free shirt with first charter booking
-- Social media giveaway: 10 free shirts
+### Initial Inventory (Testing Market)
+```
+Design #1 (Classic):
+- 25 white/navy polo style
+- 25 navy/white standard tees
 
-### Seasonal Promotions
-**Spring Break (March):**
-- Design 4 (Jet Ski) featured
-- "Spring Break Bundle" - 2 shirts + jet ski rental
+Design #2 (Sunset):
+- 50 standard tees (white/cream)
 
-**Summer (June-August):**
-- All designs on sale
-- "Family Pack" - 4 shirts for $89.99
+Design #3 (Minimalist):
+- 25 premium tri-blend
 
-**Fall (October):**
-- Long sleeve launch
-- "Fall Fishing" hoodie special
+Design #4 (Fishing):
+- 25 performance tees
+
+Design #5 (Beach):
+- 25 standard tees
+- 10 youth sizes
+
+Total: 185 pieces
+Estimated cost: $1,200 - $1,500
+Retail value: $4,600 - $5,700
+```
+
+### Ongoing Strategy
+1. **Month 1-3:** Test all designs, track sales
+2. **Month 4-6:** Reorder top 2 performers in bulk
+3. **Month 7+:** Consider seasonal designs, special editions
+
+---
+
+## 🎯 Marketing & Sales Channels
+
+### In-Person Sales
+- **Captain boats:** Keep 10-20 shirts on board
+- **Gift shops:** Consignment or wholesale
+- **Marinas:** Point-of-sale displays
+- **Fishing tournaments:** Vendor booths
+
+### Online Sales
+- **Website store:** WooCommerce + Printful
+- **Amazon Merch:** Upload designs, they handle fulfillment
+- **Etsy:** Target vacation/gift buyers
+- **eBay:** Reach broader audience
+
+### Bundling Opportunities
+```
+Charter Package Upgrades:
+- T-shirt + booking: +$15 (cost: $7)
+- Family pack (4 shirts): $79.99 (cost: $32)
+- "Caught My First Fish" kids tee: Free with photo
+
+Merchandise Bundles:
+- T-shirt + hat + sticker: $39.99
+- 2 shirts: $44.99 (save $10)
+- Group orders (10+): 20% off
+```
+
+---
+
+## 📊 Sales Projections
+
+### Conservative Estimate (Year 1)
+```
+Direct to charter customers (500 trips × 30% buy rate × 1.5 shirts):
+= 225 shirts × $27 avg = $6,075
+
+Gift shop sales (3 locations × 10 shirts/month):
+= 360 shirts × $22 wholesale = $7,920
+
+Online store:
+= 100 shirts × $28 avg = $2,800
+
+Total Revenue: $16,795
+Total Cost: $5,600
+Gross Profit: $11,195
+```
+
+### Growth Estimate (Year 2)
+```
+Direct sales: $12,000 (double customer base)
+Gift shop: $15,000 (add 3 more locations)
+Online: $8,000 (marketing investment)
+Amazon/Etsy: $5,000 (passive sales)
+
+Total Revenue: $40,000
+Total Cost: $13,000
+Gross Profit: $27,000
+```
+
+---
+
+## ✅ Next Steps to Launch
+
+### Week 1: Get Samples
+- [ ] Upload designs to Printful
+- [ ] Order 1 sample of each design in each color
+- [ ] Test print quality and fit
+- [ ] Take product photos
+
+### Week 2: Set Up Online Store
+- [ ] Create WooCommerce store or Shopify
+- [ ] Integrate with Printful for fulfillment
+- [ ] Write product descriptions
+- [ ] Set pricing
+- [ ] Add size charts
+
+### Week 3: Create Marketing Assets
+- [ ] Lifestyle photos (people wearing shirts on boats)
+- [ ] Social media graphics
+- [ ] Email campaign templates
+- [ ] Instagram/Facebook ads
+
+### Week 4: Launch
+- [ ] Soft launch to email list
+- [ ] Offer 20% off first orders
+- [ ] Promote on social media
+- [ ] Bring samples on charter trips
+- [ ] Approach gift shops with samples
+
+---
+
+## 🎨 Design Customization Options
+
+Each design can be customized for:
 
 ### Special Events
-**Fishing Tournaments:**
-- Tournament-specific shirts
-- Participant discounts
-- Team orders (5+ shirts)
+- "Gulf Coast Classic Fishing Tournament 2025"
+- "Spring Break 2025"
+- "Captains Only" edition
 
-**Local Events:**
-- Booth at beach festivals
-- Pop-up shops at marinas
-- Vendor at farmers markets
+### Personalization
+- Add boat name to design
+- Add customer name to back
+- Custom colors for bulk orders (25+)
 
----
-
-## 📊 Revenue Projections
-
-### Year 1 (Conservative)
-
-**Month 1-3 (Soft Launch):**
-- On-site: 200 shirts/month × $25 avg = $5,000/month
-- Online: 50 shirts/month × $28 avg = $1,400/month
-- **Monthly Total: $6,400**
-
-**Month 4-12 (Full Operation):**
-- On-site: 400 shirts/month × $25 avg = $10,000/month
-- Online: 150 shirts/month × $28 avg = $4,200/month
-- Wholesale: 100 shirts/month × $15 = $1,500/month
-- **Monthly Total: $15,700**
-
-**Year 1 Total Revenue:**
-- Q1: $19,200 (3 months × $6,400)
-- Q2-Q4: $141,300 (9 months × $15,700)
-- **TOTAL: $160,500**
-
-**Year 1 Profit** (50% margin): **$80,250**
-
-### Year 2-3 Growth
-- **Year 2:** $250,000 revenue (56% growth)
-- **Year 3:** $350,000 revenue (40% growth)
-- Add hoodies, hats, accessories
+### Seasonal Variations
+- Summer: Brighter colors
+- Fall: Earth tones
+- Winter: "Gulf Coast Snowbirds"
+- Spring: Pastel options
 
 ---
 
-## 🏭 Recommended Suppliers
+## 📞 Production Contacts
 
-### Print Shops
-1. **Custom Ink** (customink.com)
-   - Screen printing & embroidery
-   - Minimum: 12 shirts
-   - Turnaround: 7-10 days
+**For questions about designs:**
+- Email: designs@gulfcoastcharters.com
+- Design files location: `/tshirt-designs/`
 
-2. **Printful** (printful.com)
-   - Print-on-demand
-   - No minimums
-   - Integrates with Shopify
-
-3. **4imprint** (4imprint.com)
-   - Bulk orders
-   - Great for wholesale
-   - Volume discounts
-
-### Local Options (Gulf Coast)
-- **Tee Shirt City** (Pensacola, FL)
-- **Screaming Shirts** (Mobile, AL)
-- **Gulf Graphics** (Orange Beach, AL)
+**For print quotes:**
+- CustomInk: 1-800-293-4232
+- Printful: support@printful.com
+- Local printer: AAA T-Shirts, Orange Beach
 
 ---
 
-## ✅ Implementation Checklist
+## 🏆 Best Sellers Prediction
 
-### Week 1: Design Finalization
-- [ ] Review all 5 designs
-- [ ] Approve colors and layouts
-- [ ] Get trademark/logo clearance
+Based on market research and similar businesses:
 
-### Week 2: Supplier Selection
-- [ ] Get quotes from 3+ print shops
-- [ ] Order samples (1 of each design)
-- [ ] Compare quality & pricing
+**#1 Bestseller:** Design #2 (Vintage Sunset)  
+- Appeals to tourists and locals
+- Great gift/souvenir
+- Eye-catching design
 
-### Week 3: First Order
-- [ ] Place initial order (260 shirts)
-- [ ] Set up online store (Shopify)
-- [ ] Create product photography
+**#2 Bestseller:** Design #1 (Classic Anchor)  
+- Timeless design
+- Works for all ages
+- Professional look
 
-### Week 4: Launch Prep
-- [ ] Build inventory display
-- [ ] Train staff on selling
-- [ ] Create social media content
-- [ ] Send email to customer list
-
-### Week 5: LAUNCH! 🚀
-- [ ] Grand opening sale
-- [ ] Social media campaign
-- [ ] First online orders
-- [ ] Track sales data
+**#3 Bestseller:** Design #5 (Beach Vibe)  
+- Family-friendly
+- Kids love it
+- High gifting appeal
 
 ---
 
-## 🎁 Staff Uniforms
+## 💡 Pro Tips
 
-**Recommendation:** Use Design 5 (Minimalist)
-
-**Uniform Package:**
-- 2× Polo shirts (embroidered logo)
-- 1× Performance tee (screen print)
-- 1× Trucker hat
-- Total cost: ~$90/employee
-
-**Benefits:**
-- Professional appearance
-- Walking billboard
-- Team unity
-- Free advertising
+1. **Always get samples first** - Colors look different on screen vs. fabric
+2. **Photograph well** - Lifestyle shots sell better than flat lays
+3. **Start with print-on-demand** - Test before investing in inventory
+4. **Bundle with bookings** - Easiest sales channel
+5. **Seasonal timing** - Order stock 2 months before peak season
 
 ---
 
-## 📞 Next Steps
-
-1. **Review designs** - Choose which to produce first
-2. **Get quotes** - Contact 3 print shops
-3. **Order samples** - Test quality before bulk order
-4. **Set up online store** - Shopify or WooCommerce
-5. **Photograph products** - Hire photographer or DIY
-6. **Launch!** - Start selling and promote
-
----
-
-**Ready to turn your brand into wearable art! 👕🎣**
+**Your t-shirt designs are ready to print! 🎉**  
+**Start with samples, test the market, then scale up the bestsellers.**
