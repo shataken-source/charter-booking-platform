@@ -1,143 +1,86 @@
 #!/usr/bin/env node
-// scripts/setup.js
-// One-click setup script for Phase 1 testing
+
+/**
+ * Automated Setup Script for Charter Booking Platform
+ * This script checks requirements and guides you through the setup
+ */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const readline = require('readline');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+console.log('\n🎣 Gulf Coast Charters - Automated Setup\n');
+console.log('========================================\n');
 
-console.log(`
-🎣 ================================ 🎣
-   GULF COAST CHARTERS SETUP
-   Phase 1 Testing Configuration
-🎣 ================================ 🎣
-`);
+// Step 1: Check Node.js version
+console.log('✓ Checking Node.js version...');
+const nodeVersion = process.version;
+const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
 
-const questions = [
-  {
-    key: 'NEXT_PUBLIC_SUPABASE_URL',
-    question: '🗄️  Enter your Supabase URL (or press Enter to skip): ',
-    default: ''
-  },
-  {
-    key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    question: '🔑 Enter your Supabase Anon Key (or press Enter to skip): ',
-    default: ''
-  },
-  {
-    key: 'SENDGRID_API_KEY',
-    question: '📧 Enter your SendGrid API Key (or press Enter to skip): ',
-    default: ''
-  },
-  {
-    key: 'NEXT_PUBLIC_STRIPE_PUBLIC_KEY',
-    question: '💳 Enter your Stripe Public Key (or press Enter to use test mode): ',
-    default: 'pk_test_51234567890abcdefghijklmnop'
-  }
-];
+if (majorVersion < 18) {
+  console.error('❌ Node.js 18 or higher is required. You have:', nodeVersion);
+  console.log('   Please upgrade: https://nodejs.org/');
+  process.exit(1);
+}
+console.log(`  ✓ Node.js ${nodeVersion} detected\n`);
 
-const config = {};
-
-async function askQuestion(question) {
-  return new Promise((resolve) => {
-    rl.question(question.question, (answer) => {
-      config[question.key] = answer || question.default;
-      resolve();
-    });
-  });
+// Step 2: Check for .env.local file
+console.log('✓ Checking environment configuration...');
+if (!fs.existsSync('.env.local')) {
+  console.log('  ⚠️  .env.local not found. Creating from template...');
+  fs.copyFileSync('.env.local.example', '.env.local');
+  console.log('  ✓ .env.local created');
+  console.log('  ⚠️  IMPORTANT: Update .env.local with your Supabase credentials!');
+  console.log('     Get them from: https://supabase.com/dashboard/project/rdbuwyefbgnbuhmjrizo/settings/api\n');
+} else {
+  console.log('  ✓ .env.local found\n');
 }
 
-async function setup() {
-  console.log('Welcome! Let\'s set up your fishing charter platform. 🐟\n');
-  console.log('You can skip any step and configure later in the admin panel.\n');
-
-  // Ask configuration questions
-  for (const q of questions) {
-    await askQuestion(q);
-  }
-
-  // Create .env.local file
-  const envContent = Object.entries(config)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-
-  fs.writeFileSync('.env.local', envContent + '\n');
-  console.log('\n✅ Created .env.local file');
-
-  // Install dependencies
-  console.log('\n📦 Installing dependencies...');
-  try {
-    execSync('npm install', { stdio: 'inherit' });
-    console.log('✅ Dependencies installed');
-  } catch (error) {
-    console.log('⚠️  Could not install dependencies. Run "npm install" manually.');
-  }
-
-  // Create necessary directories
-  const dirs = [
-    'public/uploads',
-    'public/images',
-    'data',
-    'logs'
-  ];
-
-  dirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`✅ Created directory: ${dir}`);
-    }
-  });
-
-  // Database setup instructions
-  console.log(`
-🗄️  DATABASE SETUP
-==================
-1. Go to https://supabase.com and create a free account
-2. Create a new project
-3. Go to SQL Editor
-4. Copy and paste the contents of database-schema.sql
-5. Run the SQL to create all tables
-
-📧 EMAIL SETUP (Optional)
-=========================
-1. Go to https://sendgrid.com for free email service
-2. Or use any SMTP service you prefer
-3. Configure in admin panel later
-
-💳 PAYMENT SETUP (Optional)
-===========================
-1. Go to https://stripe.com for payment processing
-2. Use test mode for Phase 1 testing
-3. Configure in admin panel later
-
-🌊 WEATHER DATA
-===============
-No setup needed! NOAA data is free and open.
-
-🎣 READY TO START!
-==================
-Run these commands:
-
-  npm run dev     # Start development server
-  npm run test    # Run tests
-  
-Then open http://localhost:3000 in your browser.
-
-First time? Go to http://localhost:3000/admin/configuration
-
-Need help? The fish icon 🐟 in the corner is always there!
-
-Happy fishing! 🎣
-`);
-
-  rl.close();
+// Step 3: Check if Supabase credentials are configured
+const envContent = fs.readFileSync('.env.local', 'utf8');
+if (envContent.includes('your_anon_key_here') || envContent.includes('your_service_role_key_here')) {
+  console.log('⚠️  WARNING: Supabase credentials not configured!');
+  console.log('   Please update .env.local with your actual credentials before running the app.\n');
 }
 
-// Run setup
-setup().catch(console.error);
+// Step 4: Check package.json
+console.log('✓ Checking package.json...');
+if (!fs.existsSync('package.json')) {
+  console.error('❌ package.json not found!');
+  process.exit(1);
+}
+console.log('  ✓ package.json found\n');
+
+// Step 5: Install dependencies
+console.log('✓ Installing dependencies...');
+console.log('  This may take a few minutes...\n');
+
+try {
+  execSync('npm install', { stdio: 'inherit' });
+  console.log('\n  ✓ Dependencies installed successfully\n');
+} catch (error) {
+  console.error('❌ Failed to install dependencies');
+  console.error('   Please run: npm install');
+  process.exit(1);
+}
+
+// Step 6: Check for database setup
+console.log('✓ Database setup reminder...');
+console.log('  Have you run COMPLETE_DATABASE_SETUP.sql in Supabase?');
+console.log('  If not, follow these steps:');
+console.log('  1. Go to: https://supabase.com/dashboard/project/rdbuwyefbgnbuhmjrizo/sql');
+console.log('  2. Open: COMPLETE_DATABASE_SETUP.sql');
+console.log('  3. Copy and paste the entire file');
+console.log('  4. Click "Run" and wait for completion\n');
+
+// Step 7: Final instructions
+console.log('========================================');
+console.log('✅ SETUP COMPLETE!\n');
+console.log('Next steps:');
+console.log('1. Update .env.local with your Supabase credentials');
+console.log('2. Run the database setup SQL (see instructions above)');
+console.log('3. Start the dev server: npm run dev');
+console.log('4. Open http://localhost:3000 in your browser\n');
+console.log('For detailed instructions, see README.md');
+console.log('========================================\n');
+console.log('🚀 Happy fishing! 🎣\n');
