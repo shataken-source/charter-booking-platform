@@ -1,165 +1,143 @@
 #!/usr/bin/env node
+// scripts/setup.js
+// One-click setup script for Phase 1 testing
 
-/**
- * Gulf Coast Charters - Developer Setup Script
- * Automated onboarding process for new developers
- * 
- * Usage: npm run setup
- * 
- * This script:
- * - Checks Node.js version
- * - Verifies dependencies
- * - Checks for .env file
- * - Provides setup instructions
- * - Opens developer onboarding page
- */
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+const readline = require('readline');
 
-import { exec } from 'child_process';
-import { existsSync } from 'fs';
-import { promisify } from 'util';
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-const execAsync = promisify(exec);
+console.log(`
+🎣 ================================ 🎣
+   GULF COAST CHARTERS SETUP
+   Phase 1 Testing Configuration
+🎣 ================================ 🎣
+`);
 
-// ANSI color codes for terminal output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  red: '\x1b[31m'
-};
-
-const log = {
-  success: (msg) => console.log(`${colors.green}✓${colors.reset} ${msg}`),
-  error: (msg) => console.log(`${colors.red}✗${colors.reset} ${msg}`),
-  warning: (msg) => console.log(`${colors.yellow}⚠${colors.reset} ${msg}`),
-  info: (msg) => console.log(`${colors.blue}ℹ${colors.reset} ${msg}`),
-  header: (msg) => console.log(`\n${colors.bright}${colors.blue}${msg}${colors.reset}\n`)
-};
-
-async function checkNodeVersion() {
-  log.header('Checking Node.js Version');
-  const version = process.version;
-  const major = parseInt(version.slice(1).split('.')[0]);
-  
-  if (major >= 18) {
-    log.success(`Node.js ${version} detected`);
-    return true;
-  } else {
-    log.error(`Node.js ${version} is too old. Please upgrade to v18 or higher`);
-    return false;
+const questions = [
+  {
+    key: 'NEXT_PUBLIC_SUPABASE_URL',
+    question: '🗄️  Enter your Supabase URL (or press Enter to skip): ',
+    default: ''
+  },
+  {
+    key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+    question: '🔑 Enter your Supabase Anon Key (or press Enter to skip): ',
+    default: ''
+  },
+  {
+    key: 'SENDGRID_API_KEY',
+    question: '📧 Enter your SendGrid API Key (or press Enter to skip): ',
+    default: ''
+  },
+  {
+    key: 'NEXT_PUBLIC_STRIPE_PUBLIC_KEY',
+    question: '💳 Enter your Stripe Public Key (or press Enter to use test mode): ',
+    default: 'pk_test_51234567890abcdefghijklmnop'
   }
+];
+
+const config = {};
+
+async function askQuestion(question) {
+  return new Promise((resolve) => {
+    rl.question(question.question, (answer) => {
+      config[question.key] = answer || question.default;
+      resolve();
+    });
+  });
 }
 
-async function checkDependencies() {
-  log.header('Checking Dependencies');
-  
-  if (!existsSync('node_modules')) {
-    log.warning('Dependencies not installed');
-    log.info('Installing dependencies...');
-    try {
-      await execAsync('npm install');
-      log.success('Dependencies installed successfully');
-    } catch (error) {
-      log.error('Failed to install dependencies');
-      return false;
-    }
-  } else {
-    log.success('Dependencies already installed');
+async function setup() {
+  console.log('Welcome! Let\'s set up your fishing charter platform. 🐟\n');
+  console.log('You can skip any step and configure later in the admin panel.\n');
+
+  // Ask configuration questions
+  for (const q of questions) {
+    await askQuestion(q);
   }
-  return true;
-}
 
-async function checkEnvFile() {
-  log.header('Checking Environment Configuration');
-  
-  if (!existsSync('.env')) {
-    log.warning('.env file not found');
-    log.info('Creating .env from .env.example...');
-    
-    if (existsSync('.env.example')) {
-      try {
-        await execAsync('cp .env.example .env');
-        log.success('.env file created');
-        log.warning('Please update .env with your Supabase credentials');
-      } catch (error) {
-        log.error('Failed to create .env file');
-        return false;
-      }
-    }
-  } else {
-    log.success('.env file exists');
+  // Create .env.local file
+  const envContent = Object.entries(config)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  fs.writeFileSync('.env.local', envContent + '\n');
+  console.log('\n✅ Created .env.local file');
+
+  // Install dependencies
+  console.log('\n📦 Installing dependencies...');
+  try {
+    execSync('npm install', { stdio: 'inherit' });
+    console.log('✅ Dependencies installed');
+  } catch (error) {
+    console.log('⚠️  Could not install dependencies. Run "npm install" manually.');
   }
-  return true;
-}
 
-function printNextSteps() {
-  log.header('Setup Complete! 🎉');
-  
-  console.log(`
-${colors.bright}Next Steps:${colors.reset}
-
-1. ${colors.green}Configure Environment${colors.reset}
-   Edit .env file with your Supabase credentials:
-   - VITE_SUPABASE_URL
-   - VITE_SUPABASE_ANON_KEY
-
-2. ${colors.green}Start Development Server${colors.reset}
-   ${colors.blue}npm run dev${colors.reset}
-
-3. ${colors.green}Visit Developer Onboarding${colors.reset}
-   Open: ${colors.blue}http://localhost:5173/developer-onboarding${colors.reset}
-   
-   The onboarding page includes:
-   • Interactive setup wizard
-   • Guided code tour
-   • Video tutorials
-   • AI troubleshooting assistant
-
-${colors.bright}Useful Commands:${colors.reset}
-  npm run dev          - Start development server
-  npm run build        - Build for production
-  npm run lint         - Run ESLint
-  npm run preview      - Preview production build
-
-${colors.bright}Documentation:${colors.reset}
-  • DEVELOPER_RESOURCES.md - All URLs and API references
-  • README.md - Project overview
-  • DEPLOYMENT_GUIDE.md - Deployment instructions
-
-${colors.bright}Need Help?${colors.reset}
-  Visit /developer-onboarding and use the AI assistant!
-  `);
-}
-
-async function main() {
-  console.log(`
-${colors.bright}${colors.blue}╔═══════════════════════════════════════════════╗
-║   Gulf Coast Charters - Developer Setup      ║
-║   Interactive Onboarding System              ║
-╚═══════════════════════════════════════════════╝${colors.reset}
-  `);
-
-  const checks = [
-    checkNodeVersion(),
-    checkDependencies(),
-    checkEnvFile()
+  // Create necessary directories
+  const dirs = [
+    'public/uploads',
+    'public/images',
+    'data',
+    'logs'
   ];
 
-  const results = await Promise.all(checks);
-  const allPassed = results.every(r => r);
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`✅ Created directory: ${dir}`);
+    }
+  });
 
-  if (allPassed) {
-    printNextSteps();
-    process.exit(0);
-  } else {
-    log.error('Setup incomplete. Please fix the errors above and run again.');
-    process.exit(1);
-  }
+  // Database setup instructions
+  console.log(`
+🗄️  DATABASE SETUP
+==================
+1. Go to https://supabase.com and create a free account
+2. Create a new project
+3. Go to SQL Editor
+4. Copy and paste the contents of database-schema.sql
+5. Run the SQL to create all tables
+
+📧 EMAIL SETUP (Optional)
+=========================
+1. Go to https://sendgrid.com for free email service
+2. Or use any SMTP service you prefer
+3. Configure in admin panel later
+
+💳 PAYMENT SETUP (Optional)
+===========================
+1. Go to https://stripe.com for payment processing
+2. Use test mode for Phase 1 testing
+3. Configure in admin panel later
+
+🌊 WEATHER DATA
+===============
+No setup needed! NOAA data is free and open.
+
+🎣 READY TO START!
+==================
+Run these commands:
+
+  npm run dev     # Start development server
+  npm run test    # Run tests
+  
+Then open http://localhost:3000 in your browser.
+
+First time? Go to http://localhost:3000/admin/configuration
+
+Need help? The fish icon 🐟 in the corner is always there!
+
+Happy fishing! 🎣
+`);
+
+  rl.close();
 }
 
-main().catch(error => {
-  log.error(`Setup failed: ${error.message}`);
-  process.exit(1);
-});
+// Run setup
+setup().catch(console.error);
