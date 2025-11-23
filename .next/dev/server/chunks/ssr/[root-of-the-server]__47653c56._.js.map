@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcc/charter-booking-platform/pages/index.js"],"sourcesContent":["export default function Home() {\n  return (\n    <div style={{ \n      padding: \"50px\",\n      fontFamily: \"system-ui\",\n      maxWidth: \"800px\",\n      margin: \"0 auto\"\n    }}>\n      <h1 style={{ fontSize: \"3rem\", marginBottom: \"1rem\" }}>\n        Gulf Coast Charters\n      </h1>\n      <p style={{ fontSize: \"1.2rem\", color: \"#666\" }}>\n        Charter booking platform is running successfully!\n      </p>\n      <p style={{ marginTop: \"2rem\" }}>\n        Next.js 16.0.3 • React • Supabase\n      </p>\n    </div>\n  )\n}\r\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,qKAAC;QAAI,OAAO;YACV,SAAS;YACT,YAAY;YACZ,UAAU;YACV,QAAQ;QACV;;0BACE,qKAAC;gBAAG,OAAO;oBAAE,UAAU;oBAAQ,cAAc;gBAAO;0BAAG;;;;;;0BAGvD,qKAAC;gBAAE,OAAO;oBAAE,UAAU;oBAAU,OAAO;gBAAO;0BAAG;;;;;;0BAGjD,qKAAC;gBAAE,OAAO;oBAAE,WAAW;gBAAO;0BAAG;;;;;;;;;;;;AAKvC"}}]
-}
