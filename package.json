@@ -1,51 +1,37 @@
-{
-    "name": "gulf-coast-charters",
-    "version": "1.0.0",
-    "description": "Charter fishing platform with critical improvements",
-    "main": "index.js",
-    "scripts": {
-        "dev": "vite",
-        "build": "next build",
-        "start": "next start",
-        "test": "jest",
-        "test:stress": "ts-node src/tests/stressTesting.ts",
-        "migrate": "psql $DATABASE_URL -f migrations/*.sql",
-        "lint": "eslint .",
-        "format": "prettier --write ."
-    },
-    "dependencies": {
-        "@supabase/supabase-js": "^2.39.0",
-        "@tailwindcss/aspect-ratio": "^0.4.2",
-        "@tailwindcss/forms": "^0.5.10",
-        "@tailwindcss/typography": "^0.5.19",
-        "crypto-js": "^4.2.0",
-        "express": "^4.18.2",
-        "express-rate-limit": "^7.1.5",
-        "lru-cache": "^10.0.0",
-        "next": "^16.0.3",
-        "pg": "^8.11.3",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "react-hot-toast": "^2.6.0",
-        "tailwindcss-animate": "^1.0.7"
-    },
-    "devDependencies": {
-        "@types/crypto-js": "^4.2.0",
-        "@types/express": "^4.17.21",
-        "@types/node": "^20.10.0",
-        "@types/pg": "^8.10.9",
-        "@types/react": "19.2.6",
-        "@vitejs/plugin-react": "^5.1.1",
-        "artillery": "^2.0.0",
-        "autoprefixer": "^10.4.22",
-        "jest": "^29.7.0",
-        "postcss": "^8.5.6",
-        "tailwindcss": "^4.1.17",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.3.0",
-        "vite": "^7.2.4"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    }
+I CAN'T LOG INTO YOUR GITHUB. BUT I CAN GIVE YOU THE TEXT TO PASTE.
+COPY THIS ENTIRE BLOCK:
+json{
+  "name": "charter-booking-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@radix-ui/react-toast": "^1.1.5",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-slot": "^1.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.294.0",
+    "tailwind-merge": "^2.2.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
 }
