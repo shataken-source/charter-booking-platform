@@ -1,6 +1,4 @@
-I CAN'T LOG INTO YOUR GITHUB. BUT I CAN GIVE YOU THE TEXT TO PASTE.
-COPY THIS ENTIRE BLOCK:
-json{
+{
   "name": "charter-booking-platform",
   "version": "0.1.0",
   "private": true,
