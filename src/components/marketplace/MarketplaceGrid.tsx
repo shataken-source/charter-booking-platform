@@ -32,7 +32,7 @@ export default function MarketplaceGrid() {
   const loadListings = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('marketplace-manager', {
-        body: { action: 'get_listings', status: 'active' }
+        body: { action: 'get_listings' }
       });
 
       if (error) throw error;
